@@ -5,18 +5,32 @@
 }
 
 <h2>Register</h2>
+
+<div asp-validation-summary="All" class="text-danger"></div>
+
 <form method="post">
     <div class="mb-3">
-        <label asp-for="Input.Email" class="form-label"></label>
-        <input asp-for="Input.Email" class="form-control" />
+        <label asp-for="Input.Email" class="form-label">Email</label>
+        <input asp-for="Input.Email" class="form-control" placeholder="Email" required />
+        <span asp-validation-for="Input.Email" class="text-danger"></span>
     </div>
     <div class="mb-3">
-        <label asp-for="Input.Password" class="form-label"></label>
-        <input asp-for="Input.Password" class="form-control" type="password" />
+        <label asp-for="Input.Password" class="form-label">Password</label>
+        <input asp-for="Input.Password" class="form-control" placeholder="Password" required pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$" oninvalid="this.setCustomValidity('Password must have at least 8 characters, a capital letter and a number')"
+               oninput="this.setCustomValidity('')" />
+        <span asp-validation-for="Input.Password" class="text-danger"></span>
     </div>
     <div class="mb-3">
-        <label asp-for="Input.DateOfBirth" class="form-label"></label>
-        <input asp-for="Input.DateOfBirth" class="form-control" type="date" />
+        <label asp-for="Input.CheckPassword" class="form-label">Confirm password</label>
+        <input asp-for="Input.CheckPassword" class="form-control" placeholder="Confirm password" oninput="this.setCustomValidity('')" />
+        <span asp-validation-for="Input.CheckPassword" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Input.DateOfBirth" class="form-label">Birthday</label>
+        <input asp-for="Input.DateOfBirth" class="form-control" type="date" required />
+        <span asp-validation-for="Input.DateOfBirth" class="text-danger"></span>
     </div>
     <button type="submit" class="btn btn-primary">Register</button>
 </form>
+
+<partial name="_ValidationScriptsPartial" />

@@ -28,11 +28,18 @@ namespace SensitiveDataPage.Pages
         {
             [Required]
             [EmailAddress]
-            public string Email { get; set; }
+            public required string Email { get; set; }
 
             [Required]
-            [MinLength(8)]
-            public string Password { get; set; }
+            [DataType(DataType.Password)]
+            [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$",
+                ErrorMessage = "Password must have at least 8 characters, a capital letter and a number")]
+            public required string Password { get; set; }
+
+            [Required]
+            [DataType(DataType.Password)]
+            [Compare("Password", ErrorMessage = "Password has to be the same")]
+            public required string CheckPassword { get; set; }
 
             [Required]
             public DateTime DateOfBirth { get; set; }

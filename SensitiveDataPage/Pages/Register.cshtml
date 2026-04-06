@@ -3,12 +3,17 @@
 @{
     ViewData["Title"] = "Register";
 }
+@inject IConfiguration configuration
+@{
+    var siteKey = configuration["reCaptchaSettings:SiteKey"];
+}
 
 <h2>Register</h2>
 
 <div asp-validation-summary="All" class="text-danger"></div>
 
-<form method="post">
+<form method="post" onsubmit="onSubmit(event)">
+    <input type="hidden" id="recaptchaTokenInputId" asp-for="RecaptchaToken" />
     <div class="mb-3">
         <label asp-for="Input.Email" class="form-label">Email</label>
         <input asp-for="Input.Email" class="form-control" placeholder="Email" required />
@@ -16,8 +21,7 @@
     </div>
     <div class="mb-3">
         <label asp-for="Input.Password" class="form-label">Password</label>
-        <input asp-for="Input.Password" class="form-control" placeholder="Password" required pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$" oninvalid="this.setCustomValidity('Password must have at least 8 characters, a capital letter and a number')"
-               oninput="this.setCustomValidity('')" />
+        <input asp-for="Input.Password" class="form-control" placeholder="Password" required pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$" oninvalid="this.setCustomValidity('Password must have at least 8 characters, a capital letter and a number')" oninput="this.setCustomValidity('')" />
         <span asp-validation-for="Input.Password" class="text-danger"></span>
     </div>
     <div class="mb-3">
@@ -30,7 +34,29 @@
         <input asp-for="Input.DateOfBirth" class="form-control" type="date" required />
         <span asp-validation-for="Input.DateOfBirth" class="text-danger"></span>
     </div>
+    <div class="mb-3">
+        <div id="html_element"></div>
+    </div>
     <button type="submit" class="btn btn-primary">Register</button>
 </form>
 
-<partial name="_ValidationScriptsPartial" />
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script type="text/javascript">
+        var onloadCallback = function() {
+            if (typeof grecaptcha !== 'undefined' && document.getElementById('html_element')) {
+                grecaptcha.render('html_element', {
+                    'sitekey': '@siteKey'
+                });
+            }
+        };
+
+        function onSubmit(event) {
+            var token = (typeof grecaptcha !== 'undefined') ? grecaptcha.getResponse() : '';
+            document.getElementById("recaptchaTokenInputId").value = token;
+            // allow form submit; server should validate token
+        }
+    </script>
+
+    <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
+}

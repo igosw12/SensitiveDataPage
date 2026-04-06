@@ -24,6 +24,9 @@ namespace SensitiveDataPage.Pages
         [BindProperty]
         public InputModel Input { get; set; }
 
+        [BindProperty]
+        public string? RecaptchaToken { get; set; }
+
         public class InputModel
         {
             [Required]
@@ -46,8 +49,13 @@ namespace SensitiveDataPage.Pages
         }
 
         public async Task<IActionResult> OnPostAsync()
-        {
+            {
             if (!ModelState.IsValid) return Page();
+
+            if (RecaptchaToken == null)
+            {
+                return Page();
+            }
 
             var existing = await _db.Users.FirstOrDefaultAsync(u => u.Email == Input.Email);
             if (existing != null)

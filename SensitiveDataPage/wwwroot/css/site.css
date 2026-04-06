@@ -126,3 +126,16 @@ body {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
   text-align: start;
 }
+
+.register-container {
+    margin-top: 10%;
+    width: 60%;
+    margin-left: 5%;
+    position: center;
+}
+
+.back-arrow {
+    font-size: 30px;
+    background: none;
+    border: none;
+}

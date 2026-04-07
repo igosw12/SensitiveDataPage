@@ -1,0 +1,18 @@
+@page
+@model SensitiveDataPage.Pages.EmailVerificationModel
+@{
+    ViewData["Title"] = "Email verification";
+}
+
+<h2>Email verification</h2>
+
+@if (Model.Success)
+{
+    <div class="alert alert-success" role="alert">@Model.Message</div>
+    <a class="btn btn-primary" asp-page="/Login">Sign in</a>
+}
+else
+{
+    <div class="alert alert-danger" role="alert">@Model.Message</div>
+    <a class="btn btn-secondary" asp-page="/Index">Return to home</a>
+}

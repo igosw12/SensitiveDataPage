@@ -54,7 +54,7 @@ namespace SensitiveDataPage.Pages
         }
 
         public async Task<IActionResult> OnPostAsync()
-            {
+        {
             if (!ModelState.IsValid) return Page();
 
             if (RecaptchaToken == null)
@@ -126,9 +126,9 @@ namespace SensitiveDataPage.Pages
 
             await _emailSender.SendEmailAsync(Input.Email, "Account Verification", emailBody.ToString());
 
-            await SignInUser(user);
+            TempData["InfoMessage"] = "Registration successful. Please check your email and verify your account before signing in.";
 
-            return RedirectToPage("/Dashboard");
+            return RedirectToPage("/Login");
         }
 
         private async Task SignInUser(User user)

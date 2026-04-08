@@ -1,5 +1,5 @@
 ﻿@page
-@model IndexModel
+@model SensitiveDataPage.Pages.LoginModel
 @{
     ViewData["Title"] = "Home page";
 }
@@ -10,7 +10,21 @@
     </div>
 
     <div class="right">
-        <div class="logInMessage">
+        <div class="CommunicationMessage">
+            @if (TempData["InfoMessage"] != null)
+            {
+                <div class="alert alert-info" role="alert">@TempData["InfoMessage"]</div>
+            }
+            else if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success" role="alert">@TempData["SuccessMessage"]</div>
+            }
+            else if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger" role="alert">@TempData["ErrorMessage"]</div>
+            }
+        </div>
+        <div class="MainMessage">
             Login into Sensitive Data Manager
         </div> 
         <form method="post">
@@ -22,9 +36,9 @@
                 <label asp-for="Input.Password" class="form-label"></label>
                 <input asp-for="Input.Password" class="form-control" type="password" placeholder="Password" />
             </div>
-            <button type="submit" class="loginBtn">Login</button>
+            <button type="submit" class="submitBtn">Login</button>
         </form>
-        <p> <a asp-page="/ForgotPasword" class="forgotPasswordBtn">Forgot password?</a> </p>
+        <div class="forgotPasswordBtn"> <a class="forgotPasswordBtn" asp-page="/ForgotPasword">Forgot password?</a> </div>
         <div class="joinUsMessage">
             Join us!
         </div>

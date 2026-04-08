@@ -9,30 +9,29 @@ using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using System.Security.Claims;
-using Microsoft.AspNetCore.Mvc.RazorPages;
 
 namespace SensitiveDataPage.Pages
 {
-    public class IndexModel : PageModel
+    public class LoginModel : PageModel
     {
         private readonly ApplicationDbContext _db;
         
-        public IndexModel(ApplicationDbContext db)
+        public LoginModel(ApplicationDbContext db)
         {
             _db = db;
         }
 
         [BindProperty]
-        public InputModel Input { get; set; }
+        public required InputModel Input { get; set; }
 
         public class InputModel
         {
             [Required]
             [EmailAddress]
-            public string Email { get; set; }
+            public required string Email { get; set; }
 
             [Required]
-            public string Password { get; set; }
+            public required string Password { get; set; }
         }
 
         public async Task<IActionResult> OnPostAsync()

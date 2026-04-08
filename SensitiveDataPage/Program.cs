@@ -47,6 +47,12 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.MapGet("/", (Microsoft.AspNetCore.Http.HttpContext ctx) =>
+{
+    ctx.Response.Redirect("/Login", permanent: false);
+    return Task.CompletedTask;
+});
+
 app.MapStaticAssets();
 app.MapRazorPages()
    .WithStaticAssets();

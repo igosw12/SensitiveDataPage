@@ -19,7 +19,7 @@ namespace SensitiveDataPage.Pages
         public async Task<IActionResult> OnPostLogout()
         {
             await HttpContext.SignOutAsync();
-            return RedirectToPage("/Index");
+            return RedirectToPage("/Login");
         }
     }
 }

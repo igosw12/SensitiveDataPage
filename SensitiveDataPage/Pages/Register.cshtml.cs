@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -9,25 +7,19 @@ using SensitiveDataPage.Data;
 using SensitiveDataPage.Models;
 using SensitiveDataPage.Services;
 using System.ComponentModel.DataAnnotations;
-using System.Security.Claims;
+using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
 
 namespace SensitiveDataPage.Pages
 {
-    public class RegisterModel : PageModel
+    public class RegisterModel(ApplicationDbContext db, IEmailSender emailSender) : PageModel
     {
-        private readonly ApplicationDbContext _db;
-        private readonly IEmailSender _emailSender;
-
-        public RegisterModel(ApplicationDbContext db, IEmailSender emailSender)
-        {
-            _db = db;
-            _emailSender = emailSender;
-        }
+        private readonly ApplicationDbContext _db = db;
+        private readonly IEmailSender _emailSender = emailSender;
 
         [BindProperty]
-        public InputModel Input { get; set; }
+        public required InputModel Input { get; set; }
 
         [BindProperty]
         public string? RecaptchaToken { get; set; }
@@ -69,6 +61,18 @@ namespace SensitiveDataPage.Pages
                 return Page();
             }
 
+            var user = await CreateUserAsync().ConfigureAwait(false);
+            var token = await CreateVerificationToken(user).ConfigureAwait(false);
+            await SendEmailAsync(token).ConfigureAwait(false);
+            await _db.SaveChangesAsync();
+
+            TempData["InfoMessage"] = "Registration successful. Please check your email and verify your account before signing in.";
+
+            return RedirectToPage("/Login");
+        }
+
+        private Task<User> CreateUserAsync()
+        {
             var salt = new byte[128 / 8];
             using (var rng = RandomNumberGenerator.Create()) rng.GetBytes(salt);
             var hash = Convert.ToBase64String(KeyDerivation.Pbkdf2(
@@ -90,9 +94,14 @@ namespace SensitiveDataPage.Pages
             };
 
             _db.Users.Add(user);
+            return Task.FromResult(user);
+        }
+
+        private Task<string> CreateVerificationToken(User user)
+        {
             byte[] tokenBytes = new byte[32];
             using (var rng = RandomNumberGenerator.Create()) rng.GetBytes(tokenBytes);
-            var rawToken = WebEncoders.Base64UrlEncode(tokenBytes);
+            string rawToken = WebEncoders.Base64UrlEncode(tokenBytes);
 
             string tokenHash;
             using (var sha = SHA256.Create())
@@ -101,48 +110,48 @@ namespace SensitiveDataPage.Pages
                 tokenHash = Convert.ToBase64String(hashed);
             }
 
-            _db.EmailVerificationTokens.Add(new EmailVerificationToken
+            var emailVerificationTokens = new EmailVerificationToken
             {
                 User = user,
                 TokenHash = tokenHash,
+                CreatedAt = DateTime.UtcNow,
                 ExpiresAt = DateTime.UtcNow.AddHours(24)
-            });
+            };
 
-            await _db.SaveChangesAsync();
+            _db.EmailVerificationTokens.Add(emailVerificationTokens);
+            return Task.FromResult(rawToken);
+        }
 
+        private async Task SendEmailAsync(string rawToken)
+        {
             var callbackUrl = Url.Page("/EmailVerification", null, new { token = rawToken }, Request.Scheme);
             var safeUrl = System.Net.WebUtility.HtmlEncode(callbackUrl);
 
-            var emailBody = new StringBuilder();
-            emailBody.AppendLine("Hello,");
-            emailBody.AppendLine();
-            emailBody.AppendLine("Click the link below to verify your email address:");
-            emailBody.AppendLine($"<p><a href=\"{safeUrl}\">Verify your email address</a></p>");
-            emailBody.AppendLine();
-            emailBody.AppendLine("If you did not register, ignore this message.");
-            emailBody.AppendLine();
-            emailBody.AppendLine("Best regards,");
-            emailBody.AppendLine("SensitiveData Admin team");
+            var message = new MailMessage();
+            message.To.Add(Input.Email);
 
-            await _emailSender.SendEmailAsync(Input.Email, "Account Verification", emailBody.ToString());
+            message.IsBodyHtml = true;
 
-            TempData["InfoMessage"] = "Registration successful. Please check your email and verify your account before signing in.";
+            message.Body = $@"
+            <html>
+            <body>
+                <p>Hello,</p>
+                <p></p>
+                <p>Click below to verify your email address:</p>
+                <p> </p>
+                <a href='{callbackUrl}' 
+                   style='display:inline-block;padding:12px 20px;
+                          color:#fff;background:#007bff;
+                          text-decoration:none;border-radius:5px;'>
+                    Verify your email address
+                </a>
+                <p> </p>
+                <p>If you didn't create an account on our page, please contact us.</p>
 
-            return RedirectToPage("/Login");
-        }
+            </body>
+            </html>";
 
-        private async Task SignInUser(User user)
-        {
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email)
-            };
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var authProperties = new AuthenticationProperties { IsPersistent = true };
-
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+            await _emailSender.SendEmailAsync(Input.Email, "Account Verification", message.Body);
         }
     }
 }

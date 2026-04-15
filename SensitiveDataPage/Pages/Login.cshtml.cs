@@ -41,14 +41,14 @@ namespace SensitiveDataPage.Pages
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == Input.Email);
             if (user == null)
             {
-                ModelState.AddModelError(string.Empty, "Invalid credentials");
+                TempData["ErrorMessage"] = "Wrong Email or Password. Please try again.";
                 return Page();
             }
 
             var parts = user.PasswordHash.Split(':');
             if (parts.Length != 2)
             {
-                ModelState.AddModelError(string.Empty, "Invalid credentials");
+                TempData["ErrorMessage"] = "Wrong Email or Password. Please try again.";
                 return Page();
             }
 
@@ -64,7 +64,13 @@ namespace SensitiveDataPage.Pages
 
             if (!CryptographicOperations.FixedTimeEquals(Convert.FromBase64String(storedHash), Convert.FromBase64String(hash)))
             {
-                ModelState.AddModelError(string.Empty, "Invalid credentials");
+                TempData["ErrorMessage"] = "Wrong Email or Password. Please try again.";
+                return Page();
+            }
+
+            if (user.IsVerified is false)
+            {
+                TempData["ErrorMessage"] = "Account is not verified yet. Activation link is on provided email. ";
                 return Page();
             }
 

@@ -48,7 +48,6 @@ namespace SensitiveDataPage.Pages
 
                 var rawToken = await PasswordResetToken(existing.Id);
                 await SendEmailAsync(rawToken);
-                await _db.SaveChangesAsync();
                 TempData["SuccessMessage"] = "On provided adres email was sent link with password restart";
                 return RedirectToPage("/Login");
             }
@@ -60,30 +59,49 @@ namespace SensitiveDataPage.Pages
 
         }
 
-        private Task<string> PasswordResetToken(Guid userId)
+        private async Task<string> PasswordResetToken(Guid userId)
         {
             byte[] tokenBytes = new byte[32];
             using (var rng = RandomNumberGenerator.Create()) rng.GetBytes(tokenBytes);
             string rawToken = WebEncoders.Base64UrlEncode(tokenBytes);
 
             string tokenHash;
-            using (var sha = SHA256.Create())
+            var hashed = SHA256.HashData(Encoding.UTF8.GetBytes(rawToken));
+            tokenHash = Convert.ToBase64String(hashed);
+
+
+            var resetTokenExist = _db.PasswordResetTokens.FirstOrDefault(u => u.UserId == userId);
+            if (resetTokenExist != null)
             {
-                var hashed = sha.ComputeHash(Encoding.UTF8.GetBytes(rawToken));
-                tokenHash = Convert.ToBase64String(hashed);
+                if (resetTokenExist.Used == false)
+                {
+                    resetTokenExist.TokenHash = tokenHash;
+                    resetTokenExist.ExpiresAt = DateTime.UtcNow.AddHours(24);
+                    resetTokenExist.CreatedAt = DateTime.UtcNow;
+                }
+                else if (resetTokenExist.Used == true)
+                {
+                    resetTokenExist.TokenHash = tokenHash;
+                    resetTokenExist.ExpiresAt = DateTime.UtcNow.AddHours(24);
+                    resetTokenExist.CreatedAt = DateTime.UtcNow;
+                    resetTokenExist.Used = false;
+                }
+            }
+            else
+            {
+                var passwordResetTokens = new PasswordResetToken
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    TokenHash = tokenHash,
+                    ExpiresAt = DateTime.UtcNow.AddHours(24),
+                    CreatedAt = DateTime.UtcNow
+                };
+                _db.PasswordResetTokens.Add(passwordResetTokens);
             }
 
-            var passwordResetTokens = new PasswordResetToken
-            {
-                Id = Guid.NewGuid(),
-                UserId = userId,
-                TokenHash = tokenHash,
-                ExpiresAt = DateTime.UtcNow.AddHours(24),
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _db.PasswordResetTokens.Add(passwordResetTokens);
-            return Task.FromResult(rawToken);
+            await _db.SaveChangesAsync();
+            return rawToken;
         }
 
         private async Task SendEmailAsync(string rawToken)

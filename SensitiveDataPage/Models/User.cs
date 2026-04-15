@@ -7,10 +7,10 @@ namespace SensitiveDataPage.Models
         public Guid Id { get; set; }
         [Required]
         [MaxLength(255)]
-        public string Email { get; set; }
+        public string? Email { get; set; }
         [Required]
         [MaxLength(500)]
-        public string PasswordHash { get; set; }
+        public string? PasswordHash { get; set; }
         public DateTime DateOfBirth { get; set; }
 
         public bool IsVerified { get; set; } = false;
@@ -23,8 +23,8 @@ namespace SensitiveDataPage.Models
         public DateTime UpdatedAt { get; set; }
         public DateTime? DeletedAt { get; set; }
 
-        public ICollection<EmailVerificationToken> EmailVerificationTokens { get; set; }
-        public ICollection<PasswordResetToken> PasswordResetTokens { get; set; }
-        public ICollection<SensitiveData> SensitiveDataItems { get; set; }
+        public ICollection<EmailVerificationToken>? EmailVerificationTokens { get; set; }
+        public ICollection<PasswordResetToken>? PasswordResetTokens { get; set; }
+        public ICollection<SensitiveData>? SensitiveDataItems { get; set; }
     }
 }

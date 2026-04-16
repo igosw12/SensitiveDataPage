@@ -17,7 +17,6 @@ namespace SensitiveDataPage.Pages
             _db = db;
         }
 
-        [BindProperty(SupportsGet = true)]
         public string? Token { get; set; }
 
         public bool Success { get; set; }
@@ -47,6 +46,13 @@ namespace SensitiveDataPage.Pages
             {
                 Success = false;
                 Message = "Token is invalid, expired, or already used.";
+                return Page();
+            }
+
+            if (dbToken.User == null)
+            {
+                Success = false;
+                Message = "Associated user not found.";
                 return Page();
             }
 

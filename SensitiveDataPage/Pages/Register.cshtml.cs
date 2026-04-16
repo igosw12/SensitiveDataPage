@@ -73,6 +73,8 @@ namespace SensitiveDataPage.Pages
 
         private Task<User> CreateUserAsync()
         {
+            //Consider using a stronger hashing algorithm like Argon2 or bcrypt.
+            //Consider move it to a separate service as it is reusable and it will make the code cleaner
             var salt = new byte[128 / 8];
             using (var rng = RandomNumberGenerator.Create()) rng.GetBytes(salt);
             var hash = Convert.ToBase64String(KeyDerivation.Pbkdf2(

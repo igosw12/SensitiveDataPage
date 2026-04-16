@@ -45,6 +45,12 @@ namespace SensitiveDataPage.Pages
                 return Page();
             }
 
+            if (user.PasswordHash == null)
+            {
+                TempData["ErrorMessage"] = "Wrong Email or Password. Please try again.";
+                return Page();
+            }
+
             var parts = user.PasswordHash.Split(':');
             if (parts.Length != 2)
             {
@@ -81,21 +87,23 @@ namespace SensitiveDataPage.Pages
 
         private async Task SignInUser(User user)
         {
+
+            if (user.Email == null)
+            {
+                TempData["ErrorMessage"] = "User email is missing. Please contact support.";
+                return;
+            }
+
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Email, user.Email)
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Email, user.Email)
             };
 
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var authProperties = new AuthenticationProperties { IsPersistent = true };
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
-        }
-
-        public void OnGet()
-        {
-            //Do nothing
         }
     }
 }

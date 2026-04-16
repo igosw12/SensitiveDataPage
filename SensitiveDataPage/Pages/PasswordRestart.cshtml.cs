@@ -23,7 +23,7 @@ namespace SensitiveDataPage.Pages
         [BindProperty]
         public required InputModel Input { get; set; }
 
-        public string? tokenHash { get; set; }
+        public string? TokenHash { get; set; }
 
         public class InputModel
         {
@@ -49,10 +49,10 @@ namespace SensitiveDataPage.Pages
                 return RedirectToPage("/Login");
             }
 
-            tokenHash = await Hash(rawToken);
+            TokenHash = await Hash(rawToken);
 
             var resetToken = await _db.PasswordResetTokens
-                .FirstOrDefaultAsync(r => r.TokenHash == tokenHash);
+                .FirstOrDefaultAsync(r => r.TokenHash == TokenHash);
 
             if (resetToken == null)
             {
@@ -88,10 +88,10 @@ namespace SensitiveDataPage.Pages
                 return RedirectToPage("/Login");
             }
 
-            tokenHash = await Hash(rawToken);
+            TokenHash = await Hash(rawToken);
 
             var Token = await _db.PasswordResetTokens
-                .FirstOrDefaultAsync(r => r.TokenHash == tokenHash);
+                .FirstOrDefaultAsync(r => r.TokenHash == TokenHash);
 
             if (Token == null)
             {

@@ -33,16 +33,16 @@ Generate professional analysis and description of the pull request, including co
 
 1. Write clear and concise pull request description (TEXT ONLY)
 2. If pull request description alreay exist, modife it
-3. I do NOT create any files
-4. I do NOT push any description to repository
+3. I update pull request description on GitHub.com for current PR (gh pr edit --body-file)
+4. I do NOT create or modify source code files in repository for description publishing
 5. I provide constructive feedback with issues and improvements
 
 ## Step 3: Quality check
 
 1. No placeholder like "[your description here]"
 2. I do NOT create any new files inside project
-3. I do NOT execute any scripts, tools or external files (including skill.md)
-4. Only allowed repository actions: commit and push (from Step 0)
+3. I do NOT execute external files except required GitHub CLI command for PR description update
+4. Allowed actions: commit/push from Step 0 and PR description update on GitHub.com
 
 ## Step 4: Description check
 

@@ -10,6 +10,16 @@ I compare current branch only with current master using git diff command.
 ## Overwiev
 Generate professional analysis and description of the pull request, including code changes, potential issues, and suggestions for improvement.
 
+## Whitelisted commands:
+1. git status
+2. git diff
+3. git log
+4. gh pr edit
+5. gh pr create
+6. gh pr view
+7. git commit
+8. git push
+
 ## Step 0: Staged changes handling
 1. If there are staged changes:
    - I create a single commit for them

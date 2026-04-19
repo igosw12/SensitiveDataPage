@@ -41,11 +41,12 @@ Generate professional analysis and description of the pull request, including co
 
 ## Step 2: Provide Feedback
 
-1. Write clear and concise pull request description (TEXT ONLY)
-2. If pull request description alreay exist, modife it
-3. I update pull request description on GitHub.com for current PR (gh pr edit --body-file)
-4. I do NOT create or modify source code files in repository for description publishing
-5. I provide constructive feedback with issues and improvements
+1. Write or edit Title for current branch. 
+2. Write clear and concise pull request description (TEXT ONLY)
+3. If pull request description alreay exist, modife it
+4. I update pull request description on GitHub.com for current PR (gh pr edit --body-file)
+5. I do NOT create or modify source code files in repository for description publishing
+6. I provide constructive feedback with issues and improvements
 
 ## Step 3: Quality check
 

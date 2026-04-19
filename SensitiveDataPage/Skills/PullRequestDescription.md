@@ -1,9 +1,8 @@
 ---
 name: PullRequestDescription
-description: As a Developer, please create description for Pull Request and push it to the repo, based on changes provided only for this current branch and compered to current master. 
-When user finish his work, I review the code changes, and also write description for the pull request and push them to make visible via site github.com
-As Developer, I compere current branch only with current master using git diff commnand.
-I ensure that I go through whole project.
+description: As a Developer, create description for Pull Request based ONLY on committed changes from current branch compared to current master. 
+When user finishes work, I review code changes and generate PR description.
+I compare current branch only with current master using git diff command.
 ---
 
 # PullRequestDescription
@@ -11,27 +10,51 @@ I ensure that I go through whole project.
 ## Overwiev
 Generate professional analysis and description of the pull request, including code changes, potential issues, and suggestions for improvement.
 
+## Step 0: Staged changes handling
+1. If there are staged changes:
+   - I create a single commit for them
+   - I push commit to current branch
+2. If there are no staged changes:
+   - I do nothing
+3. I do NOT stage any new changes
+4. I do NOT modify any files manually
+
 ## Step 1: Review the Pull Request
 
-1. Analyze the code changes, looking for any potential issues, bugs, or areas for improvement.
-2. Keep code quality, readability, and maintainability in mind while reviewing the changes.
-3. Make sure code is strict to CUPID guidelines and best practices.
-4. Make sure that new code is wrote in same style as existing code and is consistent with the overall codebase.
-5. Make sure propere unit, component, integration and end to end tests are there for the changes.
-6. Changes that are not pushed or staged I don't include.
-7. I include only changes that are staged and are currently commited.
-8. If there are any staged things, I commit them as well.
+1. Analyze ONLY committed changes (git diff current branch vs master)
+2. I do NOT go through whole project, only diff
+3. Keep code quality, readability, and maintainability in mind
+4. Make sure code is strict to CUPID guidelines and best practices
+5. Make sure new code is consistent with existing code
+6. Make sure proper unit, component, integration and e2e tests are present
+7. I do NOT include unstaged or uncommitted changes
 
 ## Step 2: Provide Feedback
-1. Write a clear and concise description of the pull request and push it to git to make it visible there. 
-2. Provide constructive feedback on the code changes, highlighting any issues or areas for improvement.
 
+1. Write clear and concise pull request description (TEXT ONLY)
+2. I do NOT create any files
+3. I do NOT push any description to repository
+4. I provide constructive feedback with issues and improvements
 
 ## Step 3: Quality check
-1. No placeholder like "[your description here]" should be there in PR.md file.
-2. Do not create any new files inside a project
-3. Changes are visible in Pull Request on github.com
+
+1. No placeholder like "[your description here]"
+2. I do NOT create any new files inside project
+3. I do NOT execute any scripts, tools or external files (including skill.md)
+4. Only allowed repository actions: commit and push (from Step 0)
 
 ## Step 4: Description check
-1. I use Title, Summary, Key changes, Review checklist and a Description foundations. 
-2. I don't use any other foundations. 
+
+1. I use:
+   - Title
+   - Summary
+   - Key changes
+   - Review checklist
+   - Description foundations
+2. I don't use any other sections
+
+## Final Output
+
+Return ONLY PR description as plain text.
+No additional comments.
+No explanations.

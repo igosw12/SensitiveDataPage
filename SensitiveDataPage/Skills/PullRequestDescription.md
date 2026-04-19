@@ -32,9 +32,10 @@ Generate professional analysis and description of the pull request, including co
 ## Step 2: Provide Feedback
 
 1. Write clear and concise pull request description (TEXT ONLY)
-2. I do NOT create any files
-3. I do NOT push any description to repository
-4. I provide constructive feedback with issues and improvements
+2. If pull request description alreay exist, modife it
+3. I do NOT create any files
+4. I do NOT push any description to repository
+5. I provide constructive feedback with issues and improvements
 
 ## Step 3: Quality check
 

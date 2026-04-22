@@ -4,8 +4,242 @@
     ViewData["Title"] = "Dashboard";
 }
 
-<h2>Dashboard</h2>
-<p>Witaj, @Model.Email</p>
-<form method="post" asp-page-handler="Logout">
-    <button type="submit" class="btn btn-danger">Logout</button>
-</form>
+<div class="main-dashboard">
+    <div class="left-main-dashboard">
+        <h2>Dashboard</h2>
+        <p>Witaj, @Model.Email</p>
+    </div>
+    <div class="right-main-dashboard">
+        <form method="post" asp-page-handler="Logout">
+            <button type="submit" class="btn btn-danger">Logout</button>
+        </form>
+    </div>
+</div>
+
+<div class="top-dashboard">
+    <h3>Wybór</h3>
+    <div class="tier-dashboard">
+        <a class="tier1Data" onclick="loadTier(1, 'Dane poufne')">Dane poufne</a>
+        <a class="tier2Data" onclick="loadTier(2, 'Dane wra¿liwe')">Dane wra¿liwe</a>
+        <a class="tier3Data" onclick="loadTier(3, 'Dane publiczne')">Dane publiczne</a>
+        <a class="tier4Data" onclick="loadTier(4, 'Niestandardowe dane')">Niestandardowe dane</a>
+    </div>
+</div>
+
+<div id="tier-panel" style="display:none;" class="tier-panel">
+    <h4 id="tier-title"></h4>
+
+    <form id="add-form" class="add-form">
+        <div class="add-form-top">
+            <input id="input-type" class="form-control" placeholder="Nazwa wpisu (np. Konto Gmail)" required />
+            <select id="input-category" class="form-control" required>
+                <option value="">-- Wybierz kategoriê --</option>
+                <option value="Account">Account</option>
+                <option value="Address">Address</option>
+                <option value="Card">Card</option>
+                <option value="Phone">Phone</option>
+                <option value="Documents">Documents</option>
+                <option value="Others">Others</option>
+            </select>
+        </div>
+        <div id="dynamic-fields" class="dynamic-fields-grid"></div>
+        <button type="submit" class="submitBtn add-btn">Add</button>
+    </form>
+
+    <table class="table entries-table">
+        <thead>
+            <tr><th>Nazwa</th><th>Kategoria</th><th>Pola</th><th>Dodano</th><th></th></tr>
+        </thead>
+        <tbody id="entries-body"></tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        let currentTier = null;
+        const token = () => document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
+
+        const categoryFields = {
+            Account: [
+                { id: 'login', label: 'Login / Email', type: 'text' },
+                { id: 'password', label: 'Password', type: 'password' },
+                { id: 'website', label: 'Website', type: 'url' }
+            ],
+            Address: [
+                { id: 'street', label: 'Street Address', type: 'text' },
+                { id: 'city', label: 'City', type: 'text' },
+                { id: 'postalCode', label: 'Postal Code', type: 'text' },
+                { id: 'country', label: 'Country', type: 'text' }
+            ],
+            Card: [
+                { id: 'cardNumber', label: 'Card Number', type: 'text' },
+                { id: 'cardholderName', label: 'Cardholder Name', type: 'text' },
+                { id: 'expiry', label: 'Expiry Date (MM/YY)', type: 'text' },
+                { id: 'cvv', label: 'CVV', type: 'password' }
+            ],
+            Phone: [
+                { id: 'phoneNumber', label: 'Phone Number', type: 'tel' },
+                { id: 'carrier', label: 'Carrier', type: 'text' },
+                { id: 'country', label: 'Country', type: 'text' }
+            ],
+            Documents: [
+                { id: 'documentType', label: 'Document Type', type: 'text' },
+                { id: 'number', label: 'Document Number', type: 'text' },
+                { id: 'issuer', label: 'Issuer', type: 'text' },
+                { id: 'expiry', label: 'Expiry Date', type: 'date' }
+            ],
+            Others: [
+                { id: 'key', label: 'Key', type: 'text' },
+                { id: 'value', label: 'Value', type: 'text' }
+            ]
+        };
+
+        async function post(handler, body) {
+            const res = await fetch(`?handler=${handler}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
+                body: JSON.stringify(body)
+            });
+            return res.json();
+        }
+
+        async function loadTier(tier, name) {
+            currentTier = tier;
+            document.getElementById('tier-title').textContent = name;
+            document.getElementById('input-type').value = '';
+            document.getElementById('input-category').value = '';
+            document.getElementById('dynamic-fields').innerHTML = '';
+            document.getElementById('tier-panel').style.display = 'block';
+            await refreshEntries();
+        }
+
+        document.getElementById('input-category').addEventListener('change', function () {
+            renderDynamicFields(this.value, 'dynamic-fields', null);
+        });
+
+        function renderDynamicFields(category, containerId, currentValues) {
+            const container = document.getElementById(containerId);
+            const fields = categoryFields[category] || [];
+            container.innerHTML = fields.map(f => `
+                <div class="field-row">
+                    <label class="field-label">${f.label}</label>
+                    <input class="form-control dynamic-field" data-field-id="${f.id}"
+                           type="${f.type}" placeholder="${f.label}"
+                           value="${escapeAttr(currentValues?.[f.id] ?? '')}" />
+                </div>`).join('');
+        }
+
+        function getFieldValues(containerId) {
+            const fields = {};
+            document.querySelectorAll(`#${containerId} .dynamic-field`).forEach(input => {
+                fields[input.dataset.fieldId] = input.value.trim();
+            });
+            return fields;
+        }
+
+        function renderFieldsHtml(category, fields) {
+            const defs = categoryFields[category] || [];
+            if (defs.length === 0)
+                return Object.entries(fields || {}).map(([k, v]) => `<div><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</div>`).join('');
+            return defs.map(f => {
+                const val = fields?.[f.id] ?? '';
+                return val ? `<div><strong>${f.label}:</strong> ${escapeHtml(val)}</div>` : '';
+            }).join('');
+        }
+
+        function escapeHtml(str) {
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        function escapeAttr(str) {
+            return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+        }
+
+        async function refreshEntries() {
+            const res = await fetch(`?handler=Entries&tier=${currentTier}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const data = await res.json();
+            document.getElementById('entries-body').innerHTML = data.map(e => `
+                <tr data-id="${e.id}" data-category="${escapeAttr(e.category)}" data-fields='${escapeAttr(JSON.stringify(e.fields))}'>
+                    <td>${escapeHtml(e.type)}</td>
+                    <td>${escapeHtml(e.category)}</td>
+                    <td><div class="entry-fields blurred">${renderFieldsHtml(e.category, e.fields)}</div></td>
+                    <td>${new Date(e.createdAt).toLocaleString()}</td>
+                    <td class="entry-actions">
+                        <button class="icon-btn" onclick="toggleBlur(this)" title="Show/Hide"><i class="bi bi-eye"></i></button>
+                        <button class="icon-btn" onclick="editRow(this)" title="Edit"><i class="bi bi-pencil"></i></button>
+                        <button class="icon-btn text-danger" onclick="deleteRow(this)" title="Delete"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>`).join('');
+        }
+
+        function toggleBlur(btn) {
+            const div = btn.closest('tr').querySelector('.entry-fields');
+            const isBlurred = div.classList.toggle('blurred');
+            btn.innerHTML = `<i class="bi bi-eye${isBlurred ? '' : '-slash'}"></i>`;
+        }
+
+        function editRow(btn) {
+            const tr = btn.closest('tr');
+            const category = tr.dataset.category;
+            const currentFields = JSON.parse(tr.dataset.fields || '{}');
+            const defs = categoryFields[category] || [];
+            const fieldsDiv = tr.querySelector('.entry-fields');
+
+            fieldsDiv.classList.remove('blurred');
+            fieldsDiv.innerHTML = defs.map(f => `
+                <div class="field-row">
+                    <label class="field-label">${f.label}</label>
+                    <input class="form-control edit-field" data-field-id="${f.id}"
+                           type="${f.type}" value="${escapeAttr(currentFields[f.id] ?? '')}" />
+                </div>`).join('') + `
+                <div class="edit-actions">
+                    <button class="icon-btn text-success" onclick="saveEdit(this)" title="Save"><i class="bi bi-check-lg"></i></button>
+                    <button class="icon-btn" onclick="refreshEntries()" title="Cancel"><i class="bi bi-x-lg"></i></button>
+                </div>`;
+            btn.style.display = 'none';
+        }
+
+        async function saveEdit(btn) {
+            const tr = btn.closest('tr');
+            const id = tr.dataset.id;
+            const fields = {};
+            tr.querySelectorAll('.edit-field').forEach(input => {
+                fields[input.dataset.fieldId] = input.value.trim();
+            });
+            const result = await post('UpdateData', { id, fields });
+            if (result.success) await refreshEntries();
+            else alert(result.message ?? 'Error updating data.');
+        }
+
+        async function deleteRow(btn) {
+            if (!confirm('Are you sure you want to delete this entry?')) return;
+            const id = btn.closest('tr').dataset.id;
+            const result = await post('DeleteData', { id });
+            if (result.success) await refreshEntries();
+            else alert(result.message ?? 'Error deleting data.');
+        }
+
+        document.getElementById('add-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const category = document.getElementById('input-category').value;
+            if (!category) { alert('Choose category.'); return; }
+            const fields = getFieldValues('dynamic-fields');
+            const result = await post('SaveData', {
+                tier: currentTier,
+                type: document.getElementById('input-type').value.trim(),
+                category,
+                fields
+            });
+            if (result.success) {
+                document.getElementById('input-type').value = '';
+                document.getElementById('input-category').value = '';
+                document.getElementById('dynamic-fields').innerHTML = '';
+                await refreshEntries();
+            } else {
+                alert(result.message ?? 'Error saving data.');
+            }
+        });
+    </script>
+}

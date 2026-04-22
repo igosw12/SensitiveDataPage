@@ -1,0 +1,276 @@
+[1mdiff --git a/.github/workflows/dotnet.yml b/.github/workflows/dotnet.yml[m
+[1mnew file mode 100644[m
+[1mindex 0000000..6bd50bc[m
+[1m--- /dev/null[m
+[1m+++ b/.github/workflows/dotnet.yml[m
+[36m@@ -0,0 +1,28 @@[m
+[32m+[m[32mname: gate[m
+[32m+[m
+[32m+[m[32mon:[m
+[32m+[m[32m  workflow_dispatch:[m
+[32m+[m
+[32m+[m[32mjobs:[m
+[32m+[m[32m  build-and-test:[m
+[32m+[m[32m    name: Build & Test[m
+[32m+[m[32m    runs-on: ubuntu-latest[m
+[32m+[m
+[32m+[m[32m    steps:[m
+[32m+[m[32m      - name: Checkout[m
+[32m+[m[32m        uses: actions/checkout@v4[m
+[32m+[m
+[32m+[m[32m      - name: Setup .NET[m
+[32m+[m[32m        uses: actions/setup-dotnet@v4[m
+[32m+[m[32m        with:[m
+[32m+[m[32m          dotnet-version: '10.0.x'[m
+[32m+[m
+[32m+[m[32m      - name: Restore dependencies[m
+[32m+[m[32m        run: dotnet restore[m
+[32m+[m
+[32m+[m[32m      - name: Build[m
+[32m+[m[32m        run: dotnet build --no-restore --configuration Release[m
+[32m+[m
+[32m+[m[32m      # Tests are commented out – no tests implemented yet[m
+[32m+[m[32m      # - name: Test[m
+[32m+[m[32m      #   run: dotnet test --no-build --configuration Release --verbosity normal[m
+[1mdiff --git a/SensitiveDataPage/SensitiveDataPage.csproj b/SensitiveDataPage/SensitiveDataPage.csproj[m
+[1mindex 3c55770..605b37e 100644[m
+[1m--- a/SensitiveDataPage/SensitiveDataPage.csproj[m
+[1m+++ b/SensitiveDataPage/SensitiveDataPage.csproj[m
+[36m@@ -14,4 +14,8 @@[m
+     </PackageReference>[m
+   </ItemGroup>[m
+ [m
+[32m+[m[32m  <ItemGroup>[m
+[32m+[m[32m    <Folder Include="Skills\Scripts\" />[m
+[32m+[m[32m  </ItemGroup>[m
+[32m+[m
+ </Project>[m
+[1mdiff --git a/SensitiveDataPage/Skills/ProjectManager.md b/SensitiveDataPage/Skills/ProjectManager.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..0b442a6[m
+[1m--- /dev/null[m
+[1m+++ b/SensitiveDataPage/Skills/ProjectManager.md[m
+[36m@@ -0,0 +1,31 @@[m
+[32m+[m[32m---[m
+[32m+[m[32mname: Quality&Project Manager[m
+[32m+[m[32mdescription: As a Quality&Project Manager, I am responsible for reviewing pull requests, providing feedback, and ensuring that the project is progressing smoothly. I coordinate it with team member.[m[41m [m
+[32m+[m[32mWhen user submits a pull request, I review the code changes, check for any issues or improvements, and provide constructive feedback.[m
+[32m+[m[32mI also write description for the pull request and write them as PR.md file. If existing PR.md file is there, I will update it with the new changes, if not I will create a new PR.md file.[m
+[32m+[m[32mAs Quality&Project manager, I compere current PR with current master using git diff commnand.[m
+[32m+[m[32mI ensure that I go through whole project.[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m# Quality&Project Manager[m
+[32m+[m
+[32m+[m[32m## Overwiev[m
+[32m+[m[32mGenerate professional analysis of the pull request, including code changes, potential issues, and suggestions for improvement.[m
+[32m+[m
+[32m+[m[32m## Step 1: Review the Pull Request[m
+[32m+[m
+[32m+[m[32m1. Analyze the code changes, looking for any potential issues, bugs, or areas for improvement.[m
+[32m+[m[32m2. Keep code quality, readability, and maintainability in mind while reviewing the changes.[m
+[32m+[m[32m3. Make sure code is strict to CUPID guidelines and best practices.[m
+[32m+[m[32m4. Make sure that new code is wrote in same style as existing code and is consistent with the overall codebase.[m
+[32m+[m[32m5. Make sure propere unit, component, integration and end to end tests are there for the changes.[m
+[32m+[m
+[32m+[m[32m## Step 2: Provide Feedback[m
+[32m+[m[32m1. Write a clear and concise description of the pull request, summarizing the changes made and their purpose.[m
+[32m+[m[32m2. Provide constructive feedback on the code changes, highlighting any issues or areas for improvement.[m
+[32m+[m
+[32m+[m
+[32m+[m[32m## Step 3: Quality check[m
+[32m+[m[32m1. No placeholder like "[your description here]" should be there in PR.md file.[m
+[32m+[m[32m2. PR.md file should be well formatted and easy to read.[m
+[32m+[m[32m3. PR.md file should include all relevant information about the pull request, including a summary of the changes, any potential issues, and suggestions for improvement.[m
+\ No newline at end of file[m
+[1mdiff --git a/SensitiveDataPage/Skills/PullRequestDescription.md b/SensitiveDataPage/Skills/PullRequestDescription.md[m
+[1mnew file mode 100644[m
+[1mindex 0000000..a24d58b[m
+[1m--- /dev/null[m
+[1m+++ b/SensitiveDataPage/Skills/PullRequestDescription.md[m
+[36m@@ -0,0 +1,72 @@[m
+[32m+[m[32m---[m
+[32m+[m[32mname: PullRequestDescription[m
+[32m+[m[32mdescription: As a Developer, create description for Pull Request based ONLY on committed changes from current branch compared to current master.[m[41m [m
+[32m+[m[32mWhen user finishes work, I review code changes and generate PR description.[m
+[32m+[m[32mI compare current branch only with current master using git diff command.[m
+[32m+[m[32m---[m
+[32m+[m
+[32m+[m[32m# PullRequestDescription[m
+[32m+[m
+[32m+[m[32m## Overwiev[m
+[32m+[m[32mGenerate professional analysis and description of the pull request, including code changes, potential issues, and suggestions for improvement.[m
+[32m+[m
+[32m+[m[32m## Whitelisted commands:[m
+[32m+[m[32m1. git status[m
+[32m+[m[32m2. git diff[m
+[32m+[m[32m3. git log[m
+[32m+[m[32m4. gh pr edit[m
+[32m+[m[32m5. gh pr create[m
+[32m+[m[32m6. gh pr view[m
+[32m+[m[32m7. git commit[m
+[32m+[m[32m8. git push[m
+[32m+[m
+[32m+[m[32m## Step 0: Staged changes handling[m
+[32m+[m[32m1. If there are staged changes:[m
+[32m+[m[32m   - I create a single commit for them[m
+[32m+[m[32m   - I push commit to current branch[m
+[32m+[m[32m2. If there are no staged changes:[m
+[32m+[m[32m   - I do nothing[m
+[32m+[m[32m3. I do NOT stage any new changes[m
+[32m+[m[32m4. I do NOT modify any files manually[m
+[32m+[m
+[32m+[m[32m## Step 1: Review the Pull Request[m
+[32m+[m
+[32m+[m[32m1. Analyze ONLY committed changes (git diff current branch vs master)[m
+[32m+[m[32m2. I do NOT go through whole project, only diff[m
+[32m+[m[32m3. Keep code quality, readability, and maintainability in mind[m
+[32m+[m[32m4. Make sure code is strict to CUPID guidelines and best practices[m
+[32m+[m[32m5. Make sure new code is consistent with existing code[m
+[32m+[m[32m6. Make sure proper unit, component, integration and e2e tests are present[m
+[32m+[m[32m7. I do NOT include unstaged or uncommitted changes[m
+[32m+[m
+[32m+[m[32m## Step 2: Provide Feedback[m
+[32m+[m
+[32m+[m[32m1. Write or edit Title for current branch.[m[41m [m
+[32m+[m[32m2. Write clear and concise pull request description (TEXT ONLY)[m
+[32m+[m[32m3. If pull request description alreay exist, modife it[m
+[32m+[m[32m4. I update pull request description on GitHub.com for current PR (gh pr edit --body-file)[m
+[32m+[m[32m5. I do NOT create or modify source code files in repository for description publishing[m
+[32m+[m[32m6. I provide constructive feedback with issues and improvements[m
+[32m+[m
+[32m+[m[32m## Step 3: Quality check[m
+[32m+[m
+[32m+[m[32m1. No placeholder like "[your description here]"[m
+[32m+[m[32m2. I do NOT create any new files inside project[m
+[32m+[m[32m3. I do NOT execute external files except required GitHub CLI command for PR description update[m
+[32m+[m[32m4. Allowed actions: commit/push from Step 0 and PR description update on GitHub.com[m
+[32m+[m
+[32m+[m[32m## Step 4: Description check[m
+[32m+[m
+[32m+[m[32m1. I use:[m
+[32m+[m[32m   - Title[m
+[32m+[m[32m   - Summary[m
+[32m+[m[32m   - Key changes[m
+[32m+[m[32m   - Review checklist[m
+[32m+[m[32m   - Description foundations[m
+[32m+[m[32m2. I don't use any other sections[m
+[32m+[m
+[32m+[m[32m## Final Output[m
+[32m+[m
+[32m+[m[32mReturn ONLY PR description as plain text.[m
+[32m+[m[32mNo additional comments.[m
+[32m+[m[32mNo explanations.[m
+\ No newline at end of file[m
+[1mdiff --git a/SensitiveDataPage/Skills/Scripts/generate-pr-summary.ps1 b/SensitiveDataPage/Skills/Scripts/generate-pr-summary.ps1[m
+[1mnew file mode 100644[m
+[1mindex 0000000..e150308[m
+[1m--- /dev/null[m
+[1m+++ b/SensitiveDataPage/Skills/Scripts/generate-pr-summary.ps1[m
+[36m@@ -0,0 +1,77 @@[m
+[32m+[m[32m﻿$BaseBranch = "master"[m
+[32m+[m[32m$DiffFile = "diff.txt"[m
+[32m+[m[32m$CommitsFile = "commits.txt"[m
+[32m+[m[32m$OutputFile = "pr_summary.md"[m
+[32m+[m[32m$PublishToGitHub = $true[m
+[32m+[m
+[32m+[m[32mWrite-Host "Generating diff..."[m
+[32m+[m[32mgit diff $BaseBranch...HEAD | Out-File $DiffFile -Encoding utf8[m
+[32m+[m
+[32m+[m[32mWrite-Host "Generating commits..."[m
+[32m+[m[32mgit log $BaseBranch..HEAD --oneline | Out-File $CommitsFile -Encoding utf8[m
+[32m+[m
+[32m+[m[32mWrite-Host "Loading context..."[m
+[32m+[m
+[32m+[m[32m$Skill = Get-Content ..\ProjectManager.md -Raw[m
+[32m+[m[32m$Diff = Get-Content $DiffFile -Raw[m
+[32m+[m[32m$Commits = Get-Content $CommitsFile -Raw[m
+[32m+[m
+[32m+[m[32m$ApiKey = $env:AIStrings__OpenAIKey[m
+[32m+[m
+[32m+[m[32mif ([string]::IsNullOrWhiteSpace($ApiKey)) {[m
+[32m+[m[32m    throw "Missing API key. Set AIStrings__OpenAIKey environment variable."[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m$Prompt = @"[m
+[32m+[m[32m$Skill[m
+[32m+[m
+[32m+[m[32m## GIT DIFF[m
+[32m+[m[32m$Diff[m
+[32m+[m
+[32m+[m[32m## COMMITS[m
+[32m+[m[32m$Commits[m
+[32m+[m[32m"@[m
+[32m+[m
+[32m+[m[32mWrite-Host "Sending request to OpenAI..."[m
+[32m+[m
+[32m+[m[32m$Body = @{[m
+[32m+[m[32m    model = "gpt-5.4-mini"[m
+[32m+[m[32m    input = $Prompt[m
+[32m+[m[32m} | ConvertTo-Json -Depth 10[m
+[32m+[m
+[32m+[m[32m$Headers = @{[m
+[32m+[m[32m    "Authorization" = "Bearer $ApiKey"[m
+[32m+[m[32m    "Content-Type"  = "application/json"[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m$Response = Invoke-RestMethod -Uri "https://api.openai.com/v1/responses" -Method Post -Headers $Headers -Body $Body[m
+[32m+[m
+[32m+[m[32m$Response.output[0].content[0].text | Out-File $OutputFile -Encoding utf8[m
+[32m+[m
+[32m+[m[32mWrite-Host "Ready: $OutputFile"[m
+[32m+[m
+[32m+[m[32mif (-not $PublishToGitHub) {[m
+[32m+[m[32m    Write-Host "GitHub update skipped (PublishToGitHub=false)."[m
+[32m+[m[32m    exit 0[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32m$GhCommand = Get-Command gh -ErrorAction SilentlyContinue[m
+[32m+[m[32mif (-not $GhCommand) {[m
+[32m+[m[32m    Write-Warning "GitHub CLI (gh) not found. Install gh to publish PR description automatically."[m
+[32m+[m[32m    exit 0[m
+[32m+[m[32m}[m
+[32m+[m
+[32m+[m[32mtry {[m
+[32m+[m[32m    $PrNumber = gh pr view --json number --jq ".number"[m
+[32m+[m[32m    if ([string]::IsNullOrWhiteSpace($PrNumber)) {[m
+[32m+[m[32m        Write-Warning "No active pull request found for this branch."[m
+[32m+[m[32m        exit 0[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    gh pr edit $PrNumber --body-file $OutputFile | Out-Null[m
+[32m+[m[32m    $PrUrl = gh pr view $PrNumber --json url --jq ".url"[m
+[32m+[m[32m    Write-Host "PR description updated on GitHub.com: $PrUrl"[m
+[32m+[m[32m}[m
+[32m+[m[32mcatch {[m
+[32m+[m[32m    Write-Warning "Failed to update PR description on GitHub.com. $_"[m
+[32m+[m[32m}[m
+\ No newline at end of file[m
+[1mdiff --git a/SensitiveDataPage/appsettings.json b/SensitiveDataPage/appsettings.json[m
+[1mindex d3a2180..f9de32e 100644[m
+[1m--- a/SensitiveDataPage/appsettings.json[m
+[1m+++ b/SensitiveDataPage/appsettings.json[m
+[36m@@ -1,6 +1,5 @@[m
+ {[m
+   "ConnectionStrings": {[m
+[31m-    //"DefaultConnection": "Server=localhost;Database=MyDb;User Id=USER_PLACEHOLDER;Password=PASSWORD_PLACEHOLDER;"[m
+     "DefaultConnection": ""[m
+   },[m
+   "Logging": {[m
+[36m@@ -9,13 +8,14 @@[m
+     }[m
+   },[m
+   "ReCaptchaSettings": {[m
+[31m-    //ReCaptcha credentials[m
+     "SiteKey": "",[m
+     "SecretKey": ""[m
+   },[m
+   "EmailStrings": {[m
+[31m-    //Email credentials[m
+     "EmailAddress": "",[m
+     "EmailPassword": ""[m
+[32m+[m[32m  },[m
+[32m+[m[32m  "AIStrings": {[m
+[32m+[m[32m    "OpenAIKey": ""[m
+   }[m
+ }[m

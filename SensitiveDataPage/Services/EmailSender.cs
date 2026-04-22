@@ -2,7 +2,6 @@
 using System.Net.Mail;
 using System.Text;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Configuration;
 
 namespace SensitiveDataPage.Services
 {

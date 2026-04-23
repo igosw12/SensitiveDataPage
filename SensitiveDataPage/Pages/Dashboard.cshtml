@@ -1,28 +1,48 @@
-@page
+﻿@page
 @model SensitiveDataPage.Pages.DashboardModel
 @{
     ViewData["Title"] = "Dashboard";
 }
 
 <div class="main-dashboard">
-    <div class="left-main-dashboard">
-        <h2>Dashboard</h2>
-        <p>Witaj, @Model.Email</p>
-    </div>
-    <div class="right-main-dashboard">
-        <form method="post" asp-page-handler="Logout">
-            <button type="submit" class="btn btn-danger">Logout</button>
-        </form>
+    <div class="dashboard-header">
+        <div class="dashboard-logo">
+            <img class="logoImg" src="~/img/logo.png" />
+        </div>
+        <div class="dashboard-actions">
+            <div class="dropdown">
+                <button class="action-btn dropbtn-styled">Hello @Model.Email</button>
+                <div class="dropdown-content-styled">
+                    <a class="dropdown-item-styled" onclick="openSettings()">Ustawienia konta ⚙</a>
+                    <form method="post" asp-page-handler="Logout" style="margin:0;">
+                        <button type="submit" class="action-btn logout-btn">Wyloguj ⏻</button>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <div class="top-dashboard">
-    <h3>Wyb�r</h3>
+    <h3>Wybór</h3>
     <div class="tier-dashboard">
         <a class="tier1Data" onclick="loadTier(1, 'Dane poufne')">Dane poufne</a>
-        <a class="tier2Data" onclick="loadTier(2, 'Dane wra�liwe')">Dane wra�liwe</a>
+        <a class="tier2Data" onclick="loadTier(2, 'Dane wrażliwe')">Dane wrażliwe</a>
         <a class="tier3Data" onclick="loadTier(3, 'Dane publiczne')">Dane publiczne</a>
         <a class="tier4Data" onclick="loadTier(4, 'Niestandardowe dane')">Niestandardowe dane</a>
+    </div>
+</div>
+
+<div id="settingsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header-settings">
+            <h2 class="settingsTitle">Ustawienia konta</h2>
+            <span class="closeSettings" onclick="closeSettings()">&times;</span>
+        </div>
+
+        <a class="two-factorAuthentication">Uwierzytelnianie dwuskładnikowe</a>
+        <a class="settings-link" href="/ChangePassword">Zmień hasło</a>
+        <a class="deleteAccount" href="/DeleteAccount">Usuń konto</a>
     </div>
 </div>
 
@@ -33,7 +53,7 @@
         <div class="add-form-top">
             <input id="input-type" class="form-control" placeholder="Nazwa wpisu (np. Konto Gmail)" required />
             <select id="input-category" class="form-control" required>
-                <option value="">-- Wybierz kategori� --</option>
+                <option value="">-- Wybierz kategorię --</option>
                 <option value="Account">Account</option>
                 <option value="Address">Address</option>
                 <option value="Card">Card</option>
@@ -116,6 +136,14 @@
         document.getElementById('input-category').addEventListener('change', function () {
             renderDynamicFields(this.value, 'dynamic-fields', null);
         });
+
+        function openSettings() {
+            document.getElementById('settingsModal').style.display = 'block';
+        }
+
+        function closeSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
 
         function renderDynamicFields(category, containerId, currentValues) {
             const container = document.getElementById(containerId);

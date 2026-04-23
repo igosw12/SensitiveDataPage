@@ -308,3 +308,261 @@ body {
 .edit-actions {
     margin-top: 0.4em;
 }
+
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-content {
+    display: none;
+    position: absolute;
+    min-width: 160px;
+    z-index: 1;
+    text-align: center;
+    border:solid;
+    border-radius: 5px;
+    border-color: cornflowerblue;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+.dropbtn {
+    background-color: white;
+    padding: 16px;
+    border: none;
+    cursor: pointer;
+}
+
+.right-main-dashboard {
+    display: none;
+}
+
+.left-main-dashboard {
+    display: none;
+}
+
+.settingsBtn {
+    display: none;
+}
+
+.submitBtnDashboard {
+    display: none;
+}
+
+.main-dashboard {
+    border-bottom: 2px solid black;
+    margin-bottom: 2%;
+    padding-bottom: 0.8em;
+}
+
+.dashboard-header {
+    margin-top: 1%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dashboard-logo {
+    display: flex;
+    align-items: center;
+}
+
+.dashboard-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+}
+
+.action-btn {
+    font-family: inherit;
+    padding: 0.5em 1.4em;
+    font-weight: 700;
+    font-size: 14px;
+    border: 2px solid black;
+    border-radius: 0.4em;
+    box-shadow: 0.1em 0.1em;
+    cursor: pointer;
+    background: white;
+    color: black;
+    transition: transform 0.1s, box-shadow 0.1s;
+    letter-spacing: 0.5px;
+}
+
+.action-btn:hover {
+    transform: translate(-0.05em, -0.05em);
+    box-shadow: 0.15em 0.15em;
+}
+
+.action-btn:active {
+    transform: translate(0.05em, 0.05em);
+    box-shadow: 0.05em 0.05em;
+}
+
+.logout-btn {
+    background: #f8d7da;
+    border-color: black;
+    width: 100%;
+}
+
+.logout-btn:hover {
+    background: #f5c2c7;
+}
+
+.dropbtn-styled {
+    background: #e8f4fd;
+}
+
+.dropbtn-styled:hover {
+    background: #cce5ff;
+}
+
+.dropdown-content-styled {
+    display: none;
+    position: absolute;
+    right: 0;
+    min-width: 180px;
+    z-index: 100;
+    background: white;
+    border: 2px solid black;
+    border-radius: 0.4em;
+    box-shadow: 0.15em 0.15em;
+    overflow: hidden;
+}
+
+.dropdown:hover .dropdown-content-styled {
+    display: block;
+}
+
+.dropdown-item-styled {
+    display: block;
+    padding: 0.6em 1.2em;
+    font-weight: 600;
+    font-size: 14px;
+    color: black;
+    text-decoration: none;
+    transition: background 0.15s;
+}
+
+.dropdown-item-styled:hover {
+    background: #e8f4fd;
+    color: black;
+}
+
+.logoImg {
+    width: 20%;
+}
+
+.toggle-switch-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.35em;
+}
+
+.toggle-label {
+    font-size: 13px;
+    font-weight: 700;
+    user-select: none;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 42px;
+    height: 22px;
+    margin: 0;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    inset: 0;
+    background: #ccc;
+    border: 2px solid black;
+    border-radius: 22px;
+    transition: background 0.25s;
+}
+
+.toggle-slider::before {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    left: 2px;
+    top: 2px;
+    background: white;
+    border-radius: 50%;
+    transition: transform 0.25s;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+.toggle-switch input:checked + .toggle-slider {
+    background: #4a90d9;
+}
+
+.toggle-switch input:checked + .toggle-slider::before {
+    transform: translateX(20px);
+}
+
+.dropdown-content-styled {
+    text-align: center;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    background: rgba(0,0,0,0.5);
+}
+
+.modal-content {
+    background: white;
+    margin: 10% auto;
+    padding: 20px;
+    width: 400px;
+    text-decoration: none;
+    overflow: auto;
+}
+
+.rightSettings {
+    float: right;
+    cursor: pointer;
+    height: 30px;
+}
+
+.leftSettings {
+    float: left;
+    height: 30px;
+    text-indent: 10px;
+}
+
+a {
+    text-decoration: none;
+    color: black;
+    cursor: pointer;
+}
+
+.modal-header-settings {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1em;
+}
+
+.settingsTitle {
+    margin: 0;
+}
+
+.closeSettings {
+    font-size: 1.6rem;
+    font-weight: 700;
+    cursor: pointer;
+    line-height: 1;
+}

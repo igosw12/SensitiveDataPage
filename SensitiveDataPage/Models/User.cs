@@ -16,6 +16,8 @@ namespace SensitiveDataPage.Models
         public bool IsVerified { get; set; } = false;
         public bool IsActive { get; set; } = true;
 
+        public bool TwoFactorEnabled { get; set; } = false;
+
         public int FailedLoginAttempts { get; set; } = 0;
         public DateTime? LockoutUntil { get; set; }
 

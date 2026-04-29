@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SensitiveDataPage.Data;
-using SensitiveDataPage.Models;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -24,6 +23,10 @@ namespace SensitiveDataPage.Pages
 
         public async Task<IActionResult> OnGetAsync()
         {
+            var rawToken = Request.Query["token"].ToString();
+
+            Token = rawToken;
+
             if (string.IsNullOrWhiteSpace(Token))
             {
                 Success = false;

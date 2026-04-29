@@ -5,9 +5,11 @@ using SensitiveDataPage.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages();
-
+//Delay is needed 
 builder.Services.AddTransient<IEmailSender, EmailSender>();
+await Task.Delay(500);
 builder.Services.AddSingleton<IEncrypt, Encrypt>();
+await Task.Delay(500);
 builder.Services.AddSingleton<IDecrypt, Decrypt>();
 
 var defaultConn = builder.Configuration.GetConnectionString("DefaultConnection");

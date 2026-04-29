@@ -8,49 +8,64 @@
     var siteKey = configuration["reCaptchaSettings:SiteKey"];
 }
 
-<div class="wrapper">
-    <div class="left">
-        Logo - TBD
+<div class="auth-page">
+    <div class="auth-header">
+        <div class="auth-logo">
+            <img class="logoImg" src="~/img/logo.png" />
+        </div>
+        <div class="app-controls">
+            <button class="action-btn lang-btn" data-lang="en" onclick="applyLang('en')">EN</button>
+            <button class="action-btn lang-btn" data-lang="pl" onclick="applyLang('pl')">PL</button>
+            <label class="toggle-switch-wrap" title="Dark mode">
+                <span class="toggle-label">☀</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()">
+                    <span class="toggle-slider"></span>
+                </label>
+                <span class="toggle-label">☾</span>
+            </label>
+        </div>
     </div>
 
-    <div class="right">
-        <div class="register-container">
-            <div class="MainMessage">
-                <button class="back-arrow" onclick="history.back()">←</button>
-                Create a new account and protect your sensitive data
-            </div>
-
-            <div asp-validation-summary="All" class="text-danger"></div>
-
-            <form method="post" onsubmit="onSubmit(event)">
-                <input type="hidden" id="recaptchaTokenInputId" asp-for="RecaptchaToken" />
-                <div class="mb-3">
-                    <label asp-for="Input.Email" class="form-label">Email</label>
-                    <input asp-for="Input.Email" class="form-control" placeholder="Email" required />
-                    <span asp-validation-for="Input.Email" class="text-danger"></span>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="Input.Password" class="form-label">Password</label>
-                    <input asp-for="Input.Password" class="form-control" placeholder="Password" required pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$" oninvalid="this.setCustomValidity('Password must have at least 8 characters, a capital letter and a number')" oninput="this.setCustomValidity('')" />
-                    <span asp-validation-for="Input.Password" class="text-danger"></span>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="Input.CheckPassword" class="form-label">Confirm password</label>
-                    <input asp-for="Input.CheckPassword" class="form-control" placeholder="Confirm password" oninput="this.setCustomValidity('')" />
-                    <span asp-validation-for="Input.CheckPassword" class="text-danger"></span>
-                </div>
-                <div class="mb-3">
-                    <label asp-for="Input.DateOfBirth" class="form-label">Birthday</label>
-                    <input asp-for="Input.DateOfBirth" class="form-control" type="date" required />
-                    <span asp-validation-for="Input.DateOfBirth" class="text-danger"></span>
-                </div>
-                <div class="mb-3">
-                    <div id="html_element"></div>
-                </div>
-                <button type="submit" class="submitBtn">Register</button>
-            </form>
+    <div class="auth-card">
+        <div class="auth-card-title">
+            <button class="back-arrow" onclick="history.back()">←</button>
+            <span data-i18n="reg.title">Create a new account and protect your sensitive data</span>
         </div>
-    </div> 
+
+        <div asp-validation-summary="All" class="text-danger"></div>
+
+        <form method="post" onsubmit="onSubmit(event)">
+            <input type="hidden" id="recaptchaTokenInputId" asp-for="RecaptchaToken" />
+            <div class="mb-3">
+                <label asp-for="Input.Email" class="form-label" data-i18n="reg.email">Email</label>
+                <input asp-for="Input.Email" class="form-control" placeholder="Email" data-i18n="reg.emailPh" required />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.Password" class="form-label" data-i18n="reg.password">Password</label>
+                <input asp-for="Input.Password" class="form-control" placeholder="Password" data-i18n="reg.passwordPh" required
+                       pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
+                       oninvalid="this.setCustomValidity('Password must have at least 8 characters, a capital letter and a number')"
+                       oninput="this.setCustomValidity('')" />
+                <span asp-validation-for="Input.Password" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.CheckPassword" class="form-label" data-i18n="reg.confirmPassword">Confirm password</label>
+                <input asp-for="Input.CheckPassword" class="form-control" placeholder="Confirm password" data-i18n="reg.confirmPh" oninput="this.setCustomValidity('')" />
+                <span asp-validation-for="Input.CheckPassword" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Input.DateOfBirth" class="form-label" data-i18n="reg.birthday">Birthday</label>
+                <input asp-for="Input.DateOfBirth" class="form-control" type="date" required />
+                <span asp-validation-for="Input.DateOfBirth" class="text-danger"></span>
+            </div>
+            <div class="mb-3">
+                <div id="html_element"></div>
+            </div>
+            <button type="submit" class="submitBtn" data-i18n="reg.btn">Register</button>
+        </form>
+    </div>
 </div>
 
 @section Scripts {
@@ -58,17 +73,13 @@
     <script type="text/javascript">
         var onloadCallback = function() {
             if (typeof grecaptcha !== 'undefined' && document.getElementById('html_element')) {
-                grecaptcha.render('html_element', {
-                    'sitekey': '@siteKey'
-                });
+                grecaptcha.render('html_element', { 'sitekey': '@siteKey' });
             }
         };
-
         function onSubmit(event) {
             var token = (typeof grecaptcha !== 'undefined') ? grecaptcha.getResponse() : '';
             document.getElementById("recaptchaTokenInputId").value = token;
         }
     </script>
-
     <script src="https://www.google.com/recaptcha/api.js?onload=onloadCallback&render=explicit" async defer></script>
 }

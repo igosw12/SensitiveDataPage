@@ -45,6 +45,12 @@ namespace SensitiveDataPage.Pages
                 return Page();
             }
 
+            if (user.IsActive is false && user.DeletedAt is not null)
+            {
+                TempData["ErrorMessage"] = "Account deleted";
+                return Page();
+            }
+
             if (user.PasswordHash == null)
             {
                 TempData["ErrorMessage"] = "Wrong Email or Password. Please try again.";

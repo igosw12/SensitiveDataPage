@@ -915,3 +915,41 @@ a {
 .container {
     max-height: 1200px;
 }
+
+.deleteAccount {
+    border: none;
+    background: none;
+    position: relative;
+    font-size: 120%;
+}
+
+.settings-2fa-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6em 0;
+    font-weight: 600;
+    font-size: 14px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 0.5em;
+}
+
+.modal-content .settings-link,
+.modal-content .deleteAccount,
+.modal-content .two-factorAuthentication {
+    display: block;
+    padding: 0.6em 0;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.modal-alert {
+    border-radius: 0.4em;
+    font-weight: 600;
+    padding: 0.6em 1em;
+    margin-bottom: 0.8em;
+}
+
+[data-theme="dark"] .settings-2fa-row {
+    border-bottom-color: #444;
+}

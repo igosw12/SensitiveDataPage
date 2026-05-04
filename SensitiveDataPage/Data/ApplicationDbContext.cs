@@ -12,6 +12,7 @@ namespace SensitiveDataPage.Data
         public DbSet<User> Users { get; set; }
         public DbSet<EmailVerificationToken> EmailVerificationTokens { get; set; }
         public DbSet<PasswordResetToken> PasswordResetTokens { get; set; }
+        public DbSet<TwoFactorToken> TwoFactorToken { get; set; }
         public DbSet<SensitiveData> SensitiveData { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
 
@@ -39,6 +40,13 @@ namespace SensitiveDataPage.Data
                 entity.ToTable("PasswordResetTokens", "dbo");
                 entity.HasIndex(e => e.UserId).HasDatabaseName("IX_PasswordReset_UserId");
                 entity.HasOne(e => e.User).WithMany(u => u.PasswordResetTokens).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<TwoFactorToken>(entity =>
+            {
+                entity.ToTable("TwoFactorTokens", "dbo");
+                entity.HasIndex(e => e.UserId).HasDatabaseName("IX_TwoFactor_UserId");
+                entity.HasOne(e => e.User).WithMany(u => u.TwoFactorToken).HasForeignKey(e => e.UserId).OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<SensitiveData>(entity =>

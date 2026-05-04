@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using SensitiveDataPage.Data;
 using SensitiveDataPage.Models;
+using SensitiveDataPage.Services;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
 using System.Security.Cryptography;
 using Microsoft.AspNetCore.Authentication.Cookies;
@@ -15,14 +16,19 @@ namespace SensitiveDataPage.Pages
     public class LoginModel : PageModel
     {
         private readonly ApplicationDbContext _db;
-        
-        public LoginModel(ApplicationDbContext db)
+        private readonly IEmailSender _emailSender;
+
+        public LoginModel(ApplicationDbContext db, IEmailSender emailSender)
         {
             _db = db;
+            _emailSender = emailSender;
         }
 
         [BindProperty]
         public required InputModel Input { get; set; }
+
+        [BindProperty]
+        public TwoFactorInputModel? TwoFactorInput { get; set; }
 
         public class InputModel
         {
@@ -32,6 +38,13 @@ namespace SensitiveDataPage.Pages
 
             [Required]
             public required string Password { get; set; }
+        }
+
+        public class TwoFactorInputModel
+        {
+            [Required]
+            [StringLength(6, MinimumLength = 6)]
+            public required string Code { get; set; }
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -65,6 +78,68 @@ namespace SensitiveDataPage.Pages
             if (!CryptographicOperations.FixedTimeEquals(Convert.FromBase64String(storedHash), Convert.FromBase64String(hash)))
                 return new JsonResult(new { success = false, message = "login.wrongCredentials" });
 
+            if (user.TwoFactorEnabled == true)
+            {
+                var result = await TwoFactorManger(user);
+                return result;
+            }
+
+            await SignInUser(user);
+
+            return new JsonResult(new { success = true });
+        }
+
+        public async Task<IActionResult> OnPostVerifyTwoFactorAsync()
+        {
+            var userIdStr = TempData["TwoFactorUserId"]?.ToString();
+            TempData.Keep("TwoFactorUserId");
+
+            if (string.IsNullOrEmpty(userIdStr) || !Guid.TryParse(userIdStr, out var userId))
+                return new JsonResult(new { success = false, message = "login.twoFactor.sessionExpired" });
+
+            if (TwoFactorInput == null || string.IsNullOrWhiteSpace(TwoFactorInput.Code))
+                return new JsonResult(new { success = false, message = "login.twoFactor.invalidCode" });
+
+            var token = await _db.TwoFactorToken.FirstOrDefaultAsync(t =>
+                t.UserId == userId && t.Used == false && t.ExpiresAt > DateTime.UtcNow);
+
+            if (token == null)
+                return new JsonResult(new { success = false, message = "login.twoFactor.expired" });
+
+            if (token.TokenHash == null)
+                return new JsonResult(new { success = false, message = "login.twoFactor.invalidCode" });
+
+            var parts = token.TokenHash.Split(':');
+            if (parts.Length != 2)
+                return new JsonResult(new { success = false, message = "login.twoFactor.invalidCode" });
+
+            var tokenSalt = Convert.FromBase64String(parts[0]);
+            var storedTokenHash = parts[1];
+
+            var inputHash = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                password: TwoFactorInput.Code.Trim(),
+                salt: tokenSalt,
+                prf: KeyDerivationPrf.HMACSHA256,
+                iterationCount: 100_000,
+                numBytesRequested: 256 / 8));
+
+            if (!CryptographicOperations.FixedTimeEquals(
+                Convert.FromBase64String(storedTokenHash),
+                Convert.FromBase64String(inputHash)))
+            {
+                return new JsonResult(new { success = false, message = "login.twoFactor.invalidCode" });
+            }
+
+            token.Used = true;
+            _db.TwoFactorToken.Update(token);
+            await _db.SaveChangesAsync();
+
+            TempData.Remove("TwoFactorUserId");
+
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null)
+                return new JsonResult(new { success = false, message = "login.wrongCredentials" });
+
             await SignInUser(user);
 
             return new JsonResult(new { success = true });
@@ -82,6 +157,73 @@ namespace SensitiveDataPage.Pages
             var authProperties = new AuthenticationProperties { IsPersistent = true };
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+        }
+
+        private async Task<IActionResult> TwoFactorManger(User user)
+        {
+            var existingToken = await _db.TwoFactorToken.FirstOrDefaultAsync(u => u.UserId == user.Id && u.TokenHash != null);
+
+            if (existingToken != null && existingToken.DailyCount >= 5 && existingToken.DailyCountResetAt > DateTime.UtcNow)
+            {
+                return new JsonResult(new { success = false, message = "login.tooManyAttempts" });
+            }
+
+            if (existingToken == null)
+            {
+                int code = RandomNumberGenerator.GetInt32(100000, 999999);
+                var encryptedCode = await Encrypt(code.ToString());
+
+                var twoFactorToken = new TwoFactorToken
+                {
+                    UserId = user.Id,
+                    TokenHash = encryptedCode,
+                    Used = false,
+                    CreatedAt = DateTime.UtcNow,
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(10),
+                    DailyCount = 1,
+                    DailyCountResetAt = DateTime.UtcNow.AddDays(1)
+                };
+
+                _db.TwoFactorToken.Add(twoFactorToken);
+                await _db.SaveChangesAsync();
+                await _emailSender.SendEmailAsync(user.Email!, "Two Factor Authentication", $"Your code is: {code} ");
+            }
+            else
+            {
+                int code = RandomNumberGenerator.GetInt32(100000, 999999);
+                var encryptedCode = await Encrypt(code.ToString());
+
+                existingToken.TokenHash = encryptedCode;
+                existingToken.Used = false;
+                existingToken.CreatedAt = DateTime.UtcNow;
+                existingToken.ExpiresAt = DateTime.UtcNow.AddMinutes(10);
+                existingToken.DailyCount += 1;
+                existingToken.DailyCountResetAt = DateTime.UtcNow.AddDays(1);
+
+                _db.TwoFactorToken.Update(existingToken);
+                await _db.SaveChangesAsync();
+                await _emailSender.SendEmailAsync(user.Email!, "Two Factor Authentication", $"Your code is: {code} ");
+            }
+
+            TempData["TwoFactorUserId"] = user.Id.ToString();
+
+            return new JsonResult(new { success = false, twoFactorRequired = true, message = "login.twoFactor.codeSent" });
+        }
+
+        private async Task<string> Encrypt(string code)
+        {
+            var salt = new byte[128 / 8];
+            using (var rng = RandomNumberGenerator.Create()) rng.GetBytes(salt);
+            var hash = Convert.ToBase64String(KeyDerivation.Pbkdf2(
+                password: code.ToString(),
+                salt: salt,
+                prf: KeyDerivationPrf.HMACSHA256,
+                iterationCount: 100_000,
+                numBytesRequested: 256 / 8));
+
+            var tokenHash = Convert.ToBase64String(salt) + ":" + hash;
+
+            return tokenHash;
         }
 
         private async Task<string> Decrypt(byte[] salt, string storedHash)

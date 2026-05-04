@@ -27,6 +27,8 @@ namespace SensitiveDataPage.Models
 
         public ICollection<EmailVerificationToken>? EmailVerificationTokens { get; set; }
         public ICollection<PasswordResetToken>? PasswordResetTokens { get; set; }
+
+        public ICollection<TwoFactorToken>? TwoFactorToken { get; set; }
         public ICollection<SensitiveData>? SensitiveDataItems { get; set; }
     }
 }

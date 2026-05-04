@@ -13,12 +13,18 @@ using System.Text;
 
 namespace SensitiveDataPage.Pages
 {
-    public class RegisterModel(ApplicationDbContext db, IEmailSender emailSender) : PageModel
+    public class RegisterModel : PageModel
     {
-        private readonly ApplicationDbContext _db = db;
-        private readonly IEmailSender _emailSender = emailSender;
+        private readonly ApplicationDbContext _db;
+        private readonly IEmailSender _emailSender;
 
-        [BindProperty]
+        public RegisterModel (ApplicationDbContext db, IEmailSender emailSender)
+        {
+            _db = db;
+            _emailSender = emailSender;
+        }
+
+[BindProperty]
         public required InputModel Input { get; set; }
 
         [BindProperty]

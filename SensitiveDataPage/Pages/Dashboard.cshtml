@@ -36,7 +36,6 @@
 </div>
 
 <div class="top-dashboard">
-    <h3 data-i18n="dash.choice">Wybór</h3>
     <div class="tier-dashboard">
         <a class="tier1Data" onclick="loadTier(1, t('dash.tier1'))" data-i18n="dash.tier1">Dane poufne</a>
         <a class="tier2Data" onclick="loadTier(2, t('dash.tier2'))" data-i18n="dash.tier2">Dane wrażliwe</a>
@@ -45,6 +44,8 @@
     </div>
 </div>
 
+<div id="dashboardAlert" class="modal-alert" style="display:none;"></div>
+
 <div id="settingsModal" class="modal">
     <div class="modal-content">
         <div class="modal-header-settings">
@@ -52,9 +53,66 @@
             <span class="closeSettings" onclick="closeSettings()">&times;</span>
         </div>
 
-        <a class="two-factorAuthentication">Uwierzytelnianie dwuskładnikowe</a>
-        <a class="settings-link" href="/ChangePassword" data-i18n="dash.changePass">Zmień hasło</a>
-        <a class="deleteAccount" href="/DeleteAccount" data-i18n="dash.deleteAcc">Usuń konto</a>
+        <div class="settings-2fa-row">
+            <span data-i18n="dash.twoFactor">Weryfikacja dwuskładnikowa</span>
+            <label class="toggle-switch">
+                <input type="checkbox" id="twoFactorToggle" @(Model.TwoFactorEnabled ? "checked" : "") onchange="toggle2fa(this)">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+        <div class="settings-2fa-row">
+            <a class="settings-link" onclick="openChangePassword()" data-i18n="dash.changePass">Zmień hasło</a>
+        </div>
+        <div class="settings-2fa-row">
+            <a class="deleteAccount" onclick="openDeleteConfirm()" data-i18n="dash.deleteAcc">Usuń konto</a>
+        </div>
+    </div>
+</div>
+
+<div id="changePasswordModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header-settings">
+            <h2 class="settingsTitle" data-i18n="dash.changePass">Zmień hasło</h2>
+            <span class="closeSettings" onclick="closeChangePassword()">&times;</span>
+        </div>
+        <div id="changePasswordAlert" class="modal-alert" style="display:none;"></div>
+        <div class="mb-3">
+            <label class="field-label" data-i18n="dash.oldPassword">Stare hasło</label>
+            <input id="cp-old" class="form-control" type="password" placeholder="••••••••" data-i18n="dash.oldPassword" />
+        </div>
+        <div class="mb-3">
+            <label class="field-label" data-i18n="dash.newPassword">Nowe hasło</label>
+            <input id="cp-new" class="form-control" type="password" placeholder="••••••••" data-i18n="dash.newPassword"
+                   pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$"
+                   oninvalid="this.setCustomValidity(t('dash.passwordRule'))"
+                   oninput="this.setCustomValidity(''); validateConfirm();" />
+        </div>
+        <div class="mb-3">
+            <label class="field-label" data-i18n="dash.confirmPassword">Potwierdź nowe hasło</label>
+            <input id="cp-confirm" class="form-control" type="password" placeholder="••••••••" data-i18n="dash.confirmPassword"
+                   oninput="validateConfirm()" />
+            <small id="cp-match-hint" class="text-danger" style="display:none;" data-i18n="dash.passwordMismatch">Hasła nie są identyczne</small>
+        </div>
+        <div style="display:flex; gap:0.8em; margin-top:1.2em;">
+            <button class="action-btn" style="flex:1; background: #2a6496;" onclick="submitChangePassword()" data-i18n="dash.changePassBtn">Zmień hasło</button>
+            <button class="action-btn" style="flex:1;" onclick="closeChangePassword()" data-i18n="dash.deleteConfirmNo">Anuluj</button>
+        </div>
+    </div>
+</div>
+
+<div id="deleteConfirmModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header-settings">
+            <h2 class="settingsTitle" data-i18n="dash.deleteConfirmTitle">Usuń konto</h2>
+            <span class="closeSettings" onclick="closeDeleteConfirm()">&times;</span>
+        </div>
+        <p data-i18n="dash.deleteConfirmMsg">Czy na pewno chcesz usunąć konto? Tej operacji nie można cofnąć.</p>
+        <div style="display:flex; gap:0.8em; margin-top:1.2em;">
+            <form method="post" asp-page-handler="DeleteAccount" style="flex:1; margin:0;">
+                <button type="submit" class="action-btn logout-btn" style="width:100%;" data-i18n="dash.deleteConfirmYes">Tak, usuń konto</button>
+            </form>
+            <button class="action-btn" style="flex:1;" onclick="closeDeleteConfirm()" data-i18n="dash.deleteConfirmNo">Anuluj</button>
+        </div>
     </div>
 </div>
 
@@ -73,11 +131,10 @@
             <option value="Others">Others</option>
         </select>
     </div>
-
     <form id="add-form" class="add-form">
         <div class="add-form-top">
             <input id="input-type" class="form-control" placeholder="Nazwa wpisu (np. Konto Gmail)" data-i18n="dash.entryName" required />
-            <select id="input-category" class="form-control" required>
+            <select id="input-category" class="form-control" required onchange="renderDynamicFields(this.value, 'dynamic-fields', null)">
                 <option value="" data-i18n="dash.selectCategory">-- Wybierz kategorię --</option>
                 <option value="Account">Account</option>
                 <option value="Address">Address</option>
@@ -88,7 +145,7 @@
             </select>
         </div>
         <div id="dynamic-fields" class="dynamic-fields-grid"></div>
-        <button type="submit" class="submitBtn add-btn" data-i18n="dash.addBtn">Add</button>
+        <button type="button" class="submitBtn add-btn" data-i18n="dash.addBtn" onclick="submitAddForm(this)">Add</button>
     </form>
 
     <table class="table entries-table">
@@ -106,153 +163,5 @@
 </div>
 
 @section Scripts {
-    <script>
-        let currentTier = null;
-        let allEntries = [];
-        const token = () => document.querySelector('input[name="__RequestVerificationToken"]')?.value ?? '';
-
-        const categoryFields = {
-            Account: [
-                { id: 'login', label: 'Login / Email', type: 'text' },
-                { id: 'password', label: 'Password', type: 'password' },
-                { id: 'website', label: 'Website', type: 'url' }
-            ],
-            Address: [
-                { id: 'street', label: 'Street Address', type: 'text' },
-                { id: 'city', label: 'City', type: 'text' },
-                { id: 'postalCode', label: 'Postal Code', type: 'text' },
-                { id: 'country', label: 'Country', type: 'text' }
-            ],
-            Card: [
-                { id: 'cardNumber', label: 'Card Number', type: 'text' },
-                { id: 'cardholderName', label: 'Cardholder Name', type: 'text' },
-                { id: 'expiry', label: 'Expiry Date (MM/YY)', type: 'text' },
-                { id: 'cvv', label: 'CVV', type: 'password' }
-            ],
-            Phone: [
-                { id: 'phoneNumber', label: 'Phone Number', type: 'tel' },
-                { id: 'carrier', label: 'Carrier', type: 'text' },
-                { id: 'country', label: 'Country', type: 'text' }
-            ],
-            Documents: [
-                { id: 'documentType', label: 'Document Type', type: 'text' },
-                { id: 'number', label: 'Document Number', type: 'text' },
-                { id: 'issuer', label: 'Issuer', type: 'text' },
-                { id: 'expiry', label: 'Expiry Date', type: 'date' }
-            ],
-            Others: [
-                { id: 'key', label: 'Key', type: 'text' },
-                { id: 'value', label: 'Value', type: 'text' }
-            ]
-        };
-
-        async function post(handler, body) {
-            const res = await fetch(`?handler=${handler}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token() },
-                body: JSON.stringify(body)
-            });
-            return res.json();
-        }
-
-        async function loadTier(tier, name) {
-            currentTier = tier;
-            document.getElementById('tier-title').textContent = name;
-            document.getElementById('input-type').value = '';
-            document.getElementById('input-category').value = '';
-            document.getElementById('dynamic-fields').innerHTML = '';
-            document.getElementById('tier-panel').style.display = 'block';
-            await refreshEntries();
-        }
-
-        document.getElementById('input-category').addEventListener('change', function () {
-            renderDynamicFields(this.value, 'dynamic-fields', null);
-        });
-
-        function openSettings() {
-            document.getElementById('settingsModal').style.display = 'block';
-        }
-
-        function closeSettings() {
-            document.getElementById('settingsModal').style.display = 'none';
-        }
-
-        function renderDynamicFields(category, containerId, currentValues) {
-            const container = document.getElementById(containerId);
-            const fields = categoryFields[category] || [];
-            container.innerHTML = fields.map(f => `
-                <div class="field-row">
-                    <label class="field-label">${f.label}</label>
-                    <input class="form-control dynamic-field" data-field-id="${f.id}"
-                           type="${f.type}" placeholder="${f.label}"
-                           value="${escapeAttr(currentValues?.[f.id] ?? '')}" />
-                </div>`).join('');
-        }
-
-        function getFieldValues(containerId) {
-            const fields = {};
-            document.querySelectorAll(`#${containerId} .dynamic-field`).forEach(input => {
-                fields[input.dataset.fieldId] = input.value.trim();
-            });
-            return fields;
-        }
-
-        function renderFieldsHtml(category, fields) {
-            const defs = categoryFields[category] || [];
-            if (defs.length === 0)
-                return Object.entries(fields || {}).map(([k, v]) => `<div><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</div>`).join('');
-            return defs.map(f => {
-                const val = fields?.[f.id] ?? '';
-                return val ? `<div><strong>${f.label}:</strong> ${escapeHtml(val)}</div>` : '';
-            }).join('');
-        }
-
-        function escapeHtml(str) {
-            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        }
-
-        function escapeAttr(str) {
-            return String(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-        }
-
-        async function refreshEntries() {
-            const res = await fetch(`?handler=Entries&tier=${currentTier}`, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            });
-            allEntries = await res.json();
-            filterAndRender();
-        }
-
-        function filterAndRender() {
-            const query = (document.getElementById('search-input')?.value ?? '').toLowerCase().trim();
-            const cat = document.getElementById('search-category')?.value ?? '';
-            let data = allEntries.filter(e => {
-                const matchCat = !cat || e.category === cat;
-                const matchQuery = !query || e.type.toLowerCase().includes(query) || e.category.toLowerCase().includes(query);
-                return matchCat && matchQuery;
-            });
-            renderTable(data);
-        }
-
-        function toggleBlur(btn) {
-            const div = btn.closest('tr').querySelector('.entry-fields');
-            const isBlurred = div.classList.toggle('blurred');
-            btn.innerHTML = `<i class="bi bi-eye${isBlurred ? '' : '-slash'}"></i>`;
-        }
-
-        function renderTable(data) {
-            document.getElementById('entries-body').innerHTML = data.map(e => `
-                <tr data-id="${e.id}" data-category="${escapeAttr(e.category)}" data-fields='${escapeAttr(JSON.stringify(e.fields))}'>
-                    <td>${escapeHtml(e.type)}</td>
-                    <td>${escapeHtml(e.category)}</td>
-                    <td><div class="entry-fields blurred">${renderFieldsHtml(e.category, e.fields)}</div></td>
-                    <td>${new Date(e.createdAt).toLocaleString()}</td>
-                    <td class="entry-actions">
-                        <button class="icon-btn" onclick="toggleBlur(this)" title="Show/Hide"><i class="bi bi-eye"></i></button>
-                        <button class="icon-btn" onclick="editRow(this)" title="Edit"><i class="bi bi-pencil"></i></button>
-                        <button class="icon-btn text-danger" onclick="deleteRow(this)" title="Delete"><i class="bi bi-trash"></i></button>
-                    </td>
-                </tr>`).join('');
-        }
-    </script>
+    <script src="~/js/dashboard.js" asp-append-version="true"></script>
 }

@@ -50,6 +50,7 @@ namespace SensitiveDataPage.Pages
         public class UpdateDataRequest
         {
             public Guid Id { get; set; }
+            public string Type { get; set; } = "";
             public Dictionary<string, string> Fields { get; set; } = new();
         }
 
@@ -144,7 +145,7 @@ namespace SensitiveDataPage.Pages
         {
             if (string.IsNullOrWhiteSpace(request.Type) || string.IsNullOrWhiteSpace(request.Category)
                 || request.Fields == null || !request.Fields.Any(f => !string.IsNullOrWhiteSpace(f.Value)))
-                return new JsonResult(new { success = false, message = "Name, category and at least one field are required." });
+                return new JsonResult(new { success = false, message = "dash.nameCategoryRequired" });
 
             var json = JsonSerializer.Serialize(request);
             var encrypted = _encrypt.EncryptData(json);
@@ -166,15 +167,16 @@ namespace SensitiveDataPage.Pages
         public async Task<IActionResult> OnPostUpdateDataAsync([FromBody] UpdateDataRequest request)
         {
             if (request.Fields == null || !request.Fields.Any(f => !string.IsNullOrWhiteSpace(f.Value)))
-                return new JsonResult(new { success = false, message = "At least one field is required." });
+                return new JsonResult(new { success = false, message = "dash.fieldRequired" });
 
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var record = await _db.SensitiveData.FirstOrDefaultAsync(s => s.Id == request.Id && s.UserId == userId && s.DeletedAt == null);
             if (record == null)
-                return new JsonResult(new { success = false, message = "Record not found." });
+                return new JsonResult(new { success = false, message = "dash.recordNotFound" });
 
             var json = _decrypt.DecryptData(record.EncryptedData, record.EncryptionIV, record.EncryptionTag);
             var existing = JsonSerializer.Deserialize<SaveDataRequest>(json, new JsonSerializerOptions { PropertyNameCaseInsensitive = true })!;
+            existing.Type = request.Type;
             existing.Fields = request.Fields;
 
             var encrypted = _encrypt.EncryptData(JsonSerializer.Serialize(existing));
@@ -192,7 +194,7 @@ namespace SensitiveDataPage.Pages
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var record = await _db.SensitiveData.FirstOrDefaultAsync(s => s.Id == request.Id && s.UserId == userId);
             if (record == null)
-                return new JsonResult(new { success = false, message = "Record not found." });
+                return new JsonResult(new { success = false, message = "dash.recordNotFound" });
 
             record.DeletedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
@@ -210,18 +212,18 @@ namespace SensitiveDataPage.Pages
             if (string.IsNullOrWhiteSpace(request.OldPassword) ||
                 string.IsNullOrWhiteSpace(request.NewPassword) ||
                 string.IsNullOrWhiteSpace(request.ConfirmPassword))
-                return new JsonResult(new { success = false, message = "All fields are required." });
+                return new JsonResult(new { success = false, message = "dash.allFieldsRequired" });
 
             if (request.NewPassword != request.ConfirmPassword)
-                return new JsonResult(new { success = false, message = "New passwords do not match." });
+                return new JsonResult(new { success = false, message = "dash.passwordMismatch" });
 
             if (request.NewPassword == request.OldPassword)
-                return new JsonResult(new { success = false, message = "Current and new passwords can't be the same" });
+                return new JsonResult(new { success = false, message = "dash.passwordTheSame" });
 
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId && u.DeletedAt == null);
             if (user == null)
-                return new JsonResult(new { success = false, message = "User not found." });
+                return new JsonResult(new { success = false, message = "dash.userNotFound" });
 
             var parts = user.PasswordHash!.Split(':');
             var salt = Convert.FromBase64String(parts[0]);
@@ -234,7 +236,7 @@ namespace SensitiveDataPage.Pages
                 numBytesRequested: 256 / 8));
 
             if (!CryptographicOperations.FixedTimeEquals(Convert.FromBase64String(storedHash), Convert.FromBase64String(inputHash)))
-                return new JsonResult(new { success = false, message = "Current password is incorrect." });
+                return new JsonResult(new { success = false, message = "dash.passwordIncorrect" });
 
             var newSalt = RandomNumberGenerator.GetBytes(128 / 8);
             var newHash = Convert.ToBase64String(KeyDerivation.Pbkdf2(
@@ -256,7 +258,7 @@ namespace SensitiveDataPage.Pages
             var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId && u.DeletedAt == null);
             if (user == null)
-                return new JsonResult(new { success = false, message = "User not found." });
+                return new JsonResult(new { success = false, message = "dash.userNotFound" });
 
             user.TwoFactorEnabled = request.Enabled;
             user.UpdatedAt = DateTime.UtcNow;

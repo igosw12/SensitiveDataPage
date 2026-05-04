@@ -36,27 +36,24 @@ namespace SensitiveDataPage.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
+            if (!ModelState.IsValid)
+                return new JsonResult(new { success = false, message = "error.invalidForm" });
+
             try
             {
                 var existing = await _db.Users.FirstOrDefaultAsync(u => u.Email == Input.Email);
 
                 if (existing is null)
-                {
-                    TempData["ErrorMessage"] = "No account found with provided Email.";
-                    return Page();
-                }
+                    return new JsonResult(new { success = false, message = "forgot.noAccount" });
 
                 var rawToken = await PasswordResetToken(existing.Id);
                 await SendEmailAsync(rawToken);
-                TempData["SuccessMessage"] = "On provided adres email was sent link with password restart";
-                return RedirectToPage("/Login");
+                return new JsonResult(new { success = true, message = "forgot.emailSent" });
             }
             catch
             {
-                TempData["ErrorMessage"] = "Please try again";
-                return Page();
+                return new JsonResult(new { success = false, message = "error.tryAgain" });
             }
-
         }
 
         private async Task<string> PasswordResetToken(Guid userId)

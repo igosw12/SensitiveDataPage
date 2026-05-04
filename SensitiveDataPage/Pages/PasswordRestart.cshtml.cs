@@ -77,16 +77,13 @@ namespace SensitiveDataPage.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid) return Page();
+            if (!ModelState.IsValid)
+                return new JsonResult(new { success = false, message = "error.invalidForm" });
 
-            //TODO : find a way how to avoid using rawToken and hashing twice. 
             var rawToken = Request.Query["token"].ToString();
 
             if (string.IsNullOrEmpty(rawToken))
-            {
-                TempData["ErrorMessage"] = "Unexpected issue happened. Please try again";
-                return RedirectToPage("/Login");
-            }
+                return new JsonResult(new { success = false, message = "error.unexpectedTryAgain" });
 
             TokenHash = await Hash(rawToken);
 
@@ -94,34 +91,31 @@ namespace SensitiveDataPage.Pages
                 .FirstOrDefaultAsync(r => r.TokenHash == TokenHash);
 
             if (Token == null)
-            {
-                TempData["ErrorMessage"] = "Unexpected issue happened. Please try again";
-                return RedirectToPage("/Login");
-            }
+                return new JsonResult(new { success = false, message = "error.unexpectedTryAgain" });
 
             var passwordHash = await CreatePassword(Input.Password);
-            await UpdatePassword(Token.UserId, Token.Id, passwordHash);
+            var updated = await UpdatePassword(Token.UserId, Token.Id, passwordHash);
 
-            TempData["SuccessMessage"] = "Password changed properly.";
-            return RedirectToPage("/Login");
+            if (!updated)
+                return new JsonResult(new { success = false, message = "error.unexpectedTryAgain" });
+
+            return new JsonResult(new { success = true, message = "reset.success" });
         }
 
-        public async Task UpdatePassword(Guid userId, Guid tokenId, string passwordHash)
+        public async Task<bool> UpdatePassword(Guid userId, Guid tokenId, string passwordHash)
         {
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
             var token = await _db.PasswordResetTokens.FirstOrDefaultAsync(t => t.Id == tokenId);
 
             if (user == null || token == null)
-            {
-                TempData["ErrorMessage"] = "Unexpected issue happened. Please try again";
-                return;
-            }
+                return false;
 
             user.PasswordHash = passwordHash;
             user.UpdatedAt = DateTime.UtcNow;
             token.Used = true;
 
             await _db.SaveChangesAsync();
+            return true;
         }
 
         public Task<string> CreatePassword(string password)

@@ -36,7 +36,6 @@
 </div>
 
 <div class="top-dashboard">
-    <h3 data-i18n="dash.choice">Wybór</h3>
     <div class="tier-dashboard">
         <a class="tier1Data" onclick="loadTier(1, t('dash.tier1'))" data-i18n="dash.tier1">Dane poufne</a>
         <a class="tier2Data" onclick="loadTier(2, t('dash.tier2'))" data-i18n="dash.tier2">Dane wrażliwe</a>
@@ -44,6 +43,8 @@
         <a class="tier4Data" onclick="loadTier(4, t('dash.tier4'))" data-i18n="dash.tier4">Niestandardowe dane</a>
     </div>
 </div>
+
+<div id="dashboardAlert" class="modal-alert" style="display:none;"></div>
 
 <div id="settingsModal" class="modal">
     <div class="modal-content">

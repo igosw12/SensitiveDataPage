@@ -47,28 +47,22 @@ namespace SensitiveDataPage.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid) return Page();
+            if (!ModelState.IsValid)
+                return new JsonResult(new { success = false, message = "error.invalidForm" });
 
             if (RecaptchaToken == null)
-            {
-                return Page();
-            }
+                return new JsonResult(new { success = false, message = "reg.recaptchaFail" });
 
             var existing = await _db.Users.FirstOrDefaultAsync(u => u.Email == Input.Email);
             if (existing != null)
-            {
-                ModelState.AddModelError(string.Empty, "Email already in use");
-                return Page();
-            }
+                return new JsonResult(new { success = false, message = "reg.emailInUse" });
 
             var user = await CreateUserAsync().ConfigureAwait(false);
             var token = await CreateVerificationToken(user).ConfigureAwait(false);
             await SendEmailAsync(token).ConfigureAwait(false);
             await _db.SaveChangesAsync();
 
-            TempData["InfoMessage"] = "Registration successful. Please check your email and verify your account before signing in.";
-
-            return RedirectToPage("/Login");
+            return new JsonResult(new { success = true, message = "reg.registerSuccess" });
         }
 
         private Task<User> CreateUserAsync()

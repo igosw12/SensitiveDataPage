@@ -80,15 +80,15 @@ function filterAndRender() {
 
 function renderTable(data) {
     document.getElementById('entries-body').innerHTML = data.map(e => `
-        <tr data-id="${e.id}" data-category="${escapeAttr(e.category)}" data-fields='${escapeAttr(JSON.stringify(e.fields))}'>
+        <tr data-id="${e.id}" data-category="${escapeAttr(e.category)}" data-type="${escapeAttr(e.type)}" data-fields='${escapeAttr(JSON.stringify(e.fields))}'>
             <td>${escapeHtml(e.type)}</td>
             <td>${escapeHtml(e.category)}</td>
             <td><div class="entry-fields blurred">${renderFieldsHtml(e.category, e.fields)}</div></td>
             <td>${new Date(e.createdAt).toLocaleString()}</td>
             <td class="entry-actions">
-                <button class="icon-btn" onclick="toggleBlur(this)" title="Show/Hide"><i class="bi bi-eye"></i></button>
-                <button class="icon-btn" onclick="editRow(this)" title="Edit"><i class="bi bi-pencil"></i></button>
-                <button class="icon-btn text-danger" onclick="deleteRow(this)" title="Delete"><i class="bi bi-trash"></i></button>
+                <button class="icon-btn" onclick="toggleBlur(this)" title="${t('dash.show')}"><i class="bi bi-eye"></i></button>
+                <button class="icon-btn edit-btn" onclick="editRow(this)" style="display:none;" title="${t('dash.edit')}"><i class="bi bi-pencil"></i></button>
+                <button class="icon-btn text-danger" onclick="deleteRow(this)" title="${t('dash.delete')}"><i class="bi bi-trash"></i></button>
             </td>
         </tr>`).join('');
 }
@@ -111,19 +111,27 @@ function renderDynamicFields(category, containerId, existingData) {
 }
 
 function toggleBlur(btn) {
-    const div = btn.closest('tr').querySelector('.entry-fields');
+    const tr = btn.closest('tr');
+    const div = tr.querySelector('.entry-fields');
     const isBlurred = div.classList.toggle('blurred');
     btn.innerHTML = `<i class="bi bi-eye${isBlurred ? '' : '-slash'}"></i>`;
+    tr.querySelector('.edit-btn').style.display = isBlurred ? 'none' : 'inline-block';
 }
 
 function editRow(btn) {
     const tr = btn.closest('tr');
     const id = tr.dataset.id;
     const category = tr.dataset.category;
+    const type = tr.dataset.type;
     const fields = JSON.parse(tr.dataset.fields);
 
+    document.getElementById('input-type').value = type;
+
+    const catSelect = document.getElementById('input-category');
+    catSelect.value = category;
+    catSelect.disabled = true;
+
     renderDynamicFields(category, 'dynamic-fields', fields);
-    document.getElementById('input-category').value = category;
 
     const addForm = document.getElementById('add-form');
     addForm.dataset.editId = id;
@@ -195,6 +203,10 @@ async function submitChangePassword() {
         showChangePasswordAlert(t('dash.passwordMismatch'), 'danger');
         return;
     }
+    if (oldPwd == newPwd) {
+        showChangePasswordAlert(t('dash.passwordTheSame'), 'danger');
+        return;
+    }
     if (!/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/.test(newPwd)) {
         showChangePasswordAlert(t('dash.passwordRule'), 'danger');
         return;
@@ -247,14 +259,16 @@ async function submitAddForm(btn) {
     let res;
 
     if (editId) {
-        res = await post('UpdateData', { id: editId, fields });
+        res = await post('UpdateData', { id: editId, type, fields });
     } else {
         res = await post('SaveData', { tier: currentTier, type, category, fields });
     }
 
     if (res.success) {
         document.getElementById('input-type').value = '';
-        document.getElementById('input-category').value = '';
+        const catSelect = document.getElementById('input-category');
+        catSelect.value = '';
+        catSelect.disabled = false;
         document.getElementById('dynamic-fields').innerHTML = '';
         delete form.dataset.editId;
         btn.textContent = t('dash.addBtn') || 'Add';
@@ -263,3 +277,7 @@ async function submitAddForm(btn) {
         alert(res.message ?? t('dash.errorSave'));
     }
 }
+
+document.addEventListener('langchange', function () {
+    if (allEntries.length > 0) filterAndRender();
+});

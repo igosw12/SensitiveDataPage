@@ -26,20 +26,9 @@
     <div class="auth-card">
         <div class="auth-card-title" data-i18n="login.title">Login into Sensitive Data Manager</div>
 
-        @if (TempData["InfoMessage"] != null)
-        {
-            <div class="alert alert-info" role="alert">@TempData["InfoMessage"]</div>
-        }
-        else if (TempData["SuccessMessage"] != null)
-        {
-            <div class="alert alert-success" role="alert">@TempData["SuccessMessage"]</div>
-        }
-        else if (TempData["ErrorMessage"] != null)
-        {
-            <div class="alert alert-danger" role="alert">@TempData["ErrorMessage"]</div>
-        }
+        <div id="formMessage" class="d-none alert" role="alert"></div>
 
-        <form method="post">
+        <form id="loginForm" method="post">
             <div class="mb-3">
                 <label asp-for="Input.Email" class="form-label" data-i18n="login.email">Email</label>
                 <input asp-for="Input.Email" class="form-control" placeholder="Email" />
@@ -57,3 +46,7 @@
         <a asp-page="/Register" class="newAccountBtn" data-i18n="login.register">Create new account</a>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/login.js"></script>
+}

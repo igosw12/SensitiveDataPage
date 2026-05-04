@@ -36,37 +36,56 @@ namespace SensitiveDataPage.Pages
 
         public async Task<IActionResult> OnPostAsync()
         {
-            if (!ModelState.IsValid) return Page();
-
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == Input.Email);
+
             if (user == null)
-            {
-                TempData["ErrorMessage"] = "Wrong Email or Password. Please try again.";
-                return Page();
-            }
+                return new JsonResult(new { success = false, message = "login.wrongCredentials" });
 
             if (user.IsActive is false && user.DeletedAt is not null)
-            {
-                TempData["ErrorMessage"] = "Account deleted";
-                return Page();
-            }
+                return new JsonResult(new { success = false, message = "login.accountDeleted" });
+
+            if (user.Email == null)
+                return new JsonResult(new { success = false, message = "login.emailMissing" });
 
             if (user.PasswordHash == null)
+                return new JsonResult(new { success = false, message = "login.wrongCredentials" });
+
+            if (user.IsVerified is false)
+                return new JsonResult(new { success = false, message = "login.notVerified" });
+
+            var userPasswordHash = user.PasswordHash.Split(':');
+            if (userPasswordHash.Length != 2)
+                return new JsonResult(new { success = false, message = "login.wrongCredentials" });
+
+            var salt = Convert.FromBase64String(userPasswordHash[0]);
+            var storedHash = userPasswordHash[1];
+
+            var hash = await Decrypt(salt, storedHash);
+
+            if (!CryptographicOperations.FixedTimeEquals(Convert.FromBase64String(storedHash), Convert.FromBase64String(hash)))
+                return new JsonResult(new { success = false, message = "login.wrongCredentials" });
+
+            await SignInUser(user);
+
+            return new JsonResult(new { success = true });
+        }
+
+        private async Task SignInUser(User user)
+        {
+            var claims = new List<Claim>
             {
-                TempData["ErrorMessage"] = "Wrong Email or Password. Please try again.";
-                return Page();
-            }
+                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new(ClaimTypes.Email, user.Email!)
+            };
 
-            var parts = user.PasswordHash.Split(':');
-            if (parts.Length != 2)
-            {
-                TempData["ErrorMessage"] = "Wrong Email or Password. Please try again.";
-                return Page();
-            }
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var authProperties = new AuthenticationProperties { IsPersistent = true };
 
-            var salt = Convert.FromBase64String(parts[0]);
-            var storedHash = parts[1];
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+        }
 
+        private async Task<string> Decrypt(byte[] salt, string storedHash)
+        {
             var hash = Convert.ToBase64String(KeyDerivation.Pbkdf2(
                 password: Input.Password,
                 salt: salt,
@@ -74,42 +93,7 @@ namespace SensitiveDataPage.Pages
                 iterationCount: 100_000,
                 numBytesRequested: 256 / 8));
 
-            if (!CryptographicOperations.FixedTimeEquals(Convert.FromBase64String(storedHash), Convert.FromBase64String(hash)))
-            {
-                TempData["ErrorMessage"] = "Wrong Email or Password. Please try again.";
-                return Page();
-            }
-
-            if (user.IsVerified is false)
-            {
-                TempData["ErrorMessage"] = "Account is not verified yet. Activation link is on provided email. ";
-                return Page();
-            }
-
-            await SignInUser(user);
-
-            return RedirectToPage("/Dashboard");
-        }
-
-        private async Task SignInUser(User user)
-        {
-
-            if (user.Email == null)
-            {
-                TempData["ErrorMessage"] = "User email is missing. Please contact support.";
-                return;
-            }
-
-            var claims = new List<Claim>
-            {
-                new(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new(ClaimTypes.Email, user.Email)
-            };
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var authProperties = new AuthenticationProperties { IsPersistent = true };
-
-            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+            return hash;
         }
     }
 }

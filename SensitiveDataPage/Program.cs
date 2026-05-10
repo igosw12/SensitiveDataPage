@@ -5,12 +5,15 @@ using SensitiveDataPage.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddRazorPages();
+builder.Services.AddHttpContextAccessor();
 //Delay is needed 
 builder.Services.AddTransient<IEmailSender, EmailSender>();
 await Task.Delay(500);
 builder.Services.AddSingleton<IEncrypt, Encrypt>();
 await Task.Delay(500);
 builder.Services.AddSingleton<IDecrypt, Decrypt>();
+await Task.Delay(500);
+builder.Services.AddScoped<IAuditMechanism, AuditMechanism>();
 
 var defaultConn = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(defaultConn))
@@ -23,6 +26,8 @@ if (string.IsNullOrWhiteSpace(defaultConn))
 
 builder.Services.AddDbContext<SensitiveDataPage.Data.ApplicationDbContext>(options =>
     options.UseSqlServer(defaultConn));
+
+builder.Services.AddHostedService<DailyCountResetMechanism>();
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>

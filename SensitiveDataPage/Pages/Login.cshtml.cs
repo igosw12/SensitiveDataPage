@@ -17,11 +17,13 @@ namespace SensitiveDataPage.Pages
     {
         private readonly ApplicationDbContext _db;
         private readonly IEmailSender _emailSender;
+        private readonly IAuditMechanism _auditMechanism;
 
-        public LoginModel(ApplicationDbContext db, IEmailSender emailSender)
+        public LoginModel(ApplicationDbContext db, IEmailSender emailSender, IAuditMechanism auditMechanism)
         {
             _db = db;
             _emailSender = emailSender;
+            _auditMechanism = auditMechanism;
         }
 
         [BindProperty]
@@ -73,10 +75,32 @@ namespace SensitiveDataPage.Pages
             var salt = Convert.FromBase64String(userPasswordHash[0]);
             var storedHash = userPasswordHash[1];
 
-            var hash = await Decrypt(salt, storedHash);
+            var inputHash = await Decrypt(salt, Input.Password);
 
-            if (!CryptographicOperations.FixedTimeEquals(Convert.FromBase64String(storedHash), Convert.FromBase64String(hash)))
+            if (!CryptographicOperations.FixedTimeEquals(Convert.FromBase64String(storedHash), Convert.FromBase64String(inputHash)))
+            {
+                if (user.FailedLoginAttempts < 5)
+                {
+                    user.FailedLoginAttempts += 1;
+                    _db.Users.Update(user);
+                    await _db.SaveChangesAsync();
+                    await _auditMechanism.LogAudit(user.Id, "Trying to login with wrong password", "User", Request.Headers["User-Agent"].ToString(), "Wrong password");
+                }
+                else if (user.FailedLoginAttempts >= 5 && user.LockoutUntil < DateTime.UtcNow)
+                {
+                    user.LockoutUntil = DateTime.UtcNow.AddMinutes(15);
+                    _db.Users.Update(user);
+                    await _db.SaveChangesAsync();
+                    await _auditMechanism.LogAudit(user.Id, "5th failed Login Attempt - Locking account", "User", Request.Headers["User-Agent"].ToString(), "Account locked");
+                    return new JsonResult(new { success = false, message = "login.locked" });
+                }
                 return new JsonResult(new { success = false, message = "login.wrongCredentials" });
+            }
+            else if (user.LockoutUntil != null && user.LockoutUntil > DateTime.UtcNow)
+            {
+                await _auditMechanism.LogAudit(user.Id, "Trying to access locked account", "User", Request.Headers["User-Agent"].ToString(), "Trying to access locked account");
+                return new JsonResult(new { success = false, message = "login.locked" });
+            }
 
             if (user.TwoFactorEnabled == true)
             {
@@ -140,6 +164,7 @@ namespace SensitiveDataPage.Pages
             if (user == null)
                 return new JsonResult(new { success = false, message = "login.wrongCredentials" });
 
+            await _auditMechanism.LogAudit(user.Id, "Successful Two Factor Authentication", "User", Request.Headers["User-Agent"].ToString(), "User passed two factor authentication successfully");
             await SignInUser(user);
 
             return new JsonResult(new { success = true });
@@ -156,6 +181,17 @@ namespace SensitiveDataPage.Pages
             var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var authProperties = new AuthenticationProperties { IsPersistent = true };
 
+            var twoFactorTokenReset = _db.TwoFactorToken.FirstOrDefault(t => t.UserId == user.Id && t.TokenHash != null);
+
+            if (twoFactorTokenReset != null && twoFactorTokenReset.DailyCount > 0)
+            {
+                twoFactorTokenReset.DailyCount = 0;
+                twoFactorTokenReset.DailyCountResetAt = DateTime.UtcNow.AddDays(1);
+                _db.TwoFactorToken.Update(twoFactorTokenReset);
+                await _db.SaveChangesAsync();
+            }
+
+            await _auditMechanism.LogAudit(user.Id, "Successful Login", "User", Request.Headers["User-Agent"].ToString(), "User logged in successfully");
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
         }
 
@@ -165,6 +201,7 @@ namespace SensitiveDataPage.Pages
 
             if (existingToken != null && existingToken.DailyCount >= 5 && existingToken.DailyCountResetAt > DateTime.UtcNow)
             {
+                await _auditMechanism.LogAudit(user.Id, "Failed Two Factor Authentication", "User", Request.Headers["User-Agent"].ToString(), "User failed two factor authentication");
                 return new JsonResult(new { success = false, message = "login.tooManyAttempts" });
             }
 
@@ -226,10 +263,10 @@ namespace SensitiveDataPage.Pages
             return tokenHash;
         }
 
-        private async Task<string> Decrypt(byte[] salt, string storedHash)
+        private async Task<string> Decrypt(byte[] salt, string password)
         {
             var hash = Convert.ToBase64String(KeyDerivation.Pbkdf2(
-                password: Input.Password,
+                password: password,
                 salt: salt,
                 prf: KeyDerivationPrf.HMACSHA256,
                 iterationCount: 100_000,

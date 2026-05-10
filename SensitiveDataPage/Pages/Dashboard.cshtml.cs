@@ -19,12 +19,14 @@ namespace SensitiveDataPage.Pages
         private readonly ApplicationDbContext _db;
         private readonly IEncrypt _encrypt;
         private readonly IDecrypt _decrypt;
+        private readonly IAuditMechanism _auditMechanism;
 
-        public DashboardModel(ApplicationDbContext db, IEncrypt encrypt, IDecrypt decrypt)
+        public DashboardModel(ApplicationDbContext db, IEncrypt encrypt, IDecrypt decrypt, IAuditMechanism auditMechanism)
         {
             _db = db;
             _encrypt = encrypt;
             _decrypt = decrypt;
+            _auditMechanism = auditMechanism;
         }
 
         public required string Email { get; set; }
@@ -203,7 +205,9 @@ namespace SensitiveDataPage.Pages
 
         public async Task<IActionResult> OnPostLogout()
         {
+            var userId = Guid.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             await HttpContext.SignOutAsync();
+            await _auditMechanism.LogAudit(userId, "Successful Logout", "User", Request.Headers["User-Agent"].ToString(), "User logged out successfully");
             return RedirectToPage("/Login");
         }
 

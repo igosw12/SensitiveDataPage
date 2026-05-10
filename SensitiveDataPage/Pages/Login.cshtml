@@ -40,6 +40,17 @@
             <button type="submit" class="submitBtn" data-i18n="login.btn">Login</button>
         </form>
 
+        <form id="twoFactorForm" method="post" asp-page-handler="VerifyTwoFactor" class="d-none">
+            <hr />
+            <div class="auth-card-title" style="font-size:1.1rem;" data-i18n="login.twoFactor.title">Two-Factor Authentication</div>
+            <p class="text-muted small" data-i18n="login.twoFactor.desc">Enter the 6-digit code sent to your email.</p>
+            <div class="mb-3">
+                <label class="form-label" data-i18n="login.twoFactor.code">Verification Code</label>
+                <input name="TwoFactorInput.Code" class="form-control" maxlength="6" inputmode="numeric" autocomplete="one-time-code" placeholder="123456" />
+            </div>
+            <button type="submit" class="submitBtn" data-i18n="login.twoFactor.btn">Verify</button>
+        </form>
+
         <a class="forgotPasswordBtn" asp-page="/ForgotPassword" data-i18n="login.forgot">Forgot password?</a>
 
         <div class="auth-divider" data-i18n="login.join">Join us!</div>

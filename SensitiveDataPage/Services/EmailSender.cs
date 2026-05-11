@@ -28,6 +28,15 @@ namespace SensitiveDataPage.Services
                 plainText = Regex.Replace(message, "<.*?>", string.Empty);
             }
 
+            if (toEmail == null)
+                throw new ArgumentNullException(nameof(toEmail), "Recipient email address cannot be null.");
+
+            if (subject == null)
+                throw new ArgumentNullException(nameof(subject), "Email subject cannot be null.");
+
+            if (message == null)
+                throw new ArgumentNullException(nameof(message), "Email message cannot be null.");
+
             using var mailMessage = new MailMessage();
             mailMessage.From = new MailAddress(mail);
             mailMessage.To.Add(new MailAddress(toEmail));

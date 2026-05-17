@@ -75,7 +75,7 @@ namespace SensitiveDataPage.Pages
             var salt = Convert.FromBase64String(userPasswordHash[0]);
             var storedHash = userPasswordHash[1];
 
-            var inputHash = await Decrypt(salt, Input.Password);
+            var inputHash = await Unhash(salt, Input.Password);
 
             if (!CryptographicOperations.FixedTimeEquals(Convert.FromBase64String(storedHash), Convert.FromBase64String(inputHash)))
             {
@@ -208,12 +208,12 @@ namespace SensitiveDataPage.Pages
             if (existingToken == null)
             {
                 int code = RandomNumberGenerator.GetInt32(100000, 999999);
-                var encryptedCode = await Encrypt(code.ToString());
+                var hashedCode = await Hash(code.ToString());
 
                 var twoFactorToken = new TwoFactorToken
                 {
                     UserId = user.Id,
-                    TokenHash = encryptedCode,
+                    TokenHash = hashedCode,
                     Used = false,
                     CreatedAt = DateTime.UtcNow,
                     ExpiresAt = DateTime.UtcNow.AddMinutes(10),
@@ -228,9 +228,9 @@ namespace SensitiveDataPage.Pages
             else
             {
                 int code = RandomNumberGenerator.GetInt32(100000, 999999);
-                var encryptedCode = await Encrypt(code.ToString());
+                var hashedCode = await Hash(code.ToString());
 
-                existingToken.TokenHash = encryptedCode;
+                existingToken.TokenHash = hashedCode;
                 existingToken.Used = false;
                 existingToken.CreatedAt = DateTime.UtcNow;
                 existingToken.ExpiresAt = DateTime.UtcNow.AddMinutes(10);
@@ -247,7 +247,7 @@ namespace SensitiveDataPage.Pages
             return new JsonResult(new { success = false, twoFactorRequired = true, message = "login.twoFactor.codeSent" });
         }
 
-        private async Task<string> Encrypt(string code)
+        private async Task<string> Hash(string code)
         {
             var salt = new byte[128 / 8];
             using (var rng = RandomNumberGenerator.Create()) rng.GetBytes(salt);
@@ -263,7 +263,7 @@ namespace SensitiveDataPage.Pages
             return tokenHash;
         }
 
-        private async Task<string> Decrypt(byte[] salt, string password)
+        private async Task<string> Unhash(byte[] salt, string password)
         {
             var hash = Convert.ToBase64String(KeyDerivation.Pbkdf2(
                 password: password,

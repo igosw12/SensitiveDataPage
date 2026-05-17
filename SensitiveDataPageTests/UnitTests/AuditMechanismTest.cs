@@ -24,13 +24,13 @@ namespace SensitiveDataPageTests.UnitTests
         }
 
         [Fact]
-        public void ValidData_AuditMechanismTest()
+        public async Task ValidData_AuditMechanismTest()
         {
             //Arrange
             var userId = Guid.NewGuid();
-            
+
             //Act
-            _auditMechanism.LogAudit(userId, "Action", "EntityType", "UserAgent", "TestDetails").ConfigureAwait(true);
+            await _auditMechanism.LogAudit(userId, "Action", "EntityType", "UserAgent", "TestDetails");
 
             //Assert
             var log = _dbContext.AuditLogs.FirstOrDefault(a => a.UserId == userId);
@@ -44,7 +44,7 @@ namespace SensitiveDataPageTests.UnitTests
         public async Task InvalidData_AuditMechanismTest()
         {
             //Act & Assert
-            await Assert.ThrowsAsync<MissingMethodException>(() => _auditMechanism.LogAudit(Guid.Empty, String.Empty, String.Empty, String.Empty, String.Empty));
+            await Assert.ThrowsAsync<ArgumentException>(() => _auditMechanism.LogAudit(Guid.Empty, string.Empty, string.Empty, string.Empty, string.Empty));
         }
     }
 }

@@ -17,6 +17,9 @@ namespace SensitiveDataPage.Services
 
         public async Task LogAudit(Guid userId, string action, string entityType, string userAgent, string details)
         {
+            if (userId == Guid.Empty || string.IsNullOrEmpty(action) || string.IsNullOrEmpty(entityType))
+                throw new ArgumentException("UserId, Action and EntityType are required.");
+
             var ip = _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
             var auditLog = new AuditLog
             {

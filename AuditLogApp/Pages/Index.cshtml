@@ -1,0 +1,92 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Audit Logs";
+}
+
+<h2 class="mb-4">Audit Logs</h2>
+
+<form method="get" class="row g-2 mb-4">
+    <div class="col-md-3">
+        <select name="FilterAction" class="form-select">
+            <option value="">-- Wszystkie akcje --</option>
+            @foreach (var action in Model.AvailableActions)
+            {
+                <option value="@action" selected="@(Model.FilterAction == action ? "selected" : null)">@action</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3">
+        <select name="FilterEntityType" class="form-select">
+            <option value="">-- Wszystkie typy --</option>
+            @foreach (var type in Model.AvailableEntityTypes)
+            {
+                <option value="@type" selected="@(Model.FilterEntityType == type ? "selected" : null)">@type</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-4">
+        <input type="text" name="FilterEmail" class="form-control" placeholder="Filtruj po emailu użytkownika" value="@Model.FilterEmail" />
+    </div>
+    <div class="col-md-2">
+        <button type="submit" class="btn btn-primary w-100">Filtruj</button>
+    </div>
+</form>
+
+<p class="text-muted">Znaleziono: <strong>@Model.TotalCount</strong> rekordów</p>
+
+<div class="table-responsive">
+    <table class="table table-striped table-hover table-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>Data</th>
+                <th>Użytkownik</th>
+                <th>Akcja</th>
+                <th>Typ encji</th>
+                <th>ID encji</th>
+                <th>IP</th>
+                <th>User Agent</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var log in Model.AuditLogs)
+            {
+                <tr>
+                    <td>@log.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td>
+                    <td>@(log.User?.Email ?? log.UserId?.ToString() ?? "—")</td>
+                    <td><span class="badge bg-secondary">@log.Action</span></td>
+                    <td>@log.EntityType</td>
+                    <td class="text-muted small">@(log.EntityId?.ToString() ?? "—")</td>
+                    <td>@(log.IpAddress ?? "—")</td>
+                    <td class="text-truncate" style="max-width: 200px;" title="@log.UserAgent">@(log.UserAgent ?? "—")</td>
+                </tr>
+            }
+            @if (!Model.AuditLogs.Any())
+            {
+                <tr>
+                    <td colspan="7" class="text-center text-muted">Brak logów spełniających kryteria.</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+@if (Model.TotalPages > 1)
+{
+    <nav>
+        <ul class="pagination justify-content-center">
+            <li class="page-item @(Model.CurrentPage <= 1 ? "disabled" : "")">
+                <a class="page-link" href="@Url.Page("Index", new { CurrentPage = Model.CurrentPage - 1, FilterAction = Model.FilterAction, FilterEntityType = Model.FilterEntityType, FilterEmail = Model.FilterEmail })">Poprzednia</a>
+            </li>
+            @for (int i = Math.Max(1, Model.CurrentPage - 2); i <= Math.Min(Model.TotalPages, Model.CurrentPage + 2); i++)
+            {
+                <li class="page-item @(i == Model.CurrentPage ? "active" : "")">
+                    <a class="page-link" href="@Url.Page("Index", new { CurrentPage = i, FilterAction = Model.FilterAction, FilterEntityType = Model.FilterEntityType, FilterEmail = Model.FilterEmail })">@i</a>
+                </li>
+            }
+            <li class="page-item @(Model.CurrentPage >= Model.TotalPages ? "disabled" : "")">
+                <a class="page-link" href="@Url.Page("Index", new { CurrentPage = Model.CurrentPage + 1, FilterAction = Model.FilterAction, FilterEntityType = Model.FilterEntityType, FilterEmail = Model.FilterEmail })">Następna</a>
+            </li>
+        </ul>
+    </nav>
+}

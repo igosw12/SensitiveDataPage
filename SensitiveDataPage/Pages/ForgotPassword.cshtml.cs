@@ -118,7 +118,7 @@ namespace SensitiveDataPage.Pages
                 <p></p>
                 <p>Click below to restart your password:</p>
                 <p> </p>
-                <a href='{callbackUrl}' 
+                <a href='{safeUrl}' 
                    style='display:inline-block;padding:12px 20px;
                           color:#fff;background:#007bff;
                           text-decoration:none;border-radius:5px;'>

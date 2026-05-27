@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.EntityFrameworkCore;
 using Moq;
+using Microsoft.Extensions.Logging;
 using SensitiveDataPage.Data;
 using SensitiveDataPage.Models;
 using SensitiveDataPage.Pages;
@@ -49,7 +50,7 @@ namespace SensitiveDataPageTests.IntegrationTests
 
         private DashboardModel CreateDashboardModel(HttpContext httpContext)
         {
-            var model = new DashboardModel(_dbContext, _encryptMock.Object, _decryptMock.Object, _auditMechanism)
+            var model = new DashboardModel(_dbContext, _encryptMock.Object, _decryptMock.Object, _auditMechanism, Mock.Of<ILogger<DashboardModel>>())
             {
                 Email = UserEmail,
                 PageContext = new PageContext { HttpContext = httpContext },

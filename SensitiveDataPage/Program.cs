@@ -4,15 +4,17 @@ using SensitiveDataPage.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
+builder.WebHost.UseKestrel(options =>
+{
+    options.AddServerHeader = false;
+});
+
 builder.Services.AddRazorPages();
 builder.Services.AddHttpContextAccessor();
-//Delay is needed 
+
 builder.Services.AddTransient<IEmailSender, EmailSender>();
-await Task.Delay(500);
 builder.Services.AddSingleton<IEncrypt, Encrypt>();
-await Task.Delay(500);
 builder.Services.AddSingleton<IDecrypt, Decrypt>();
-await Task.Delay(500);
 builder.Services.AddScoped<IAuditMechanism, AuditMechanism>();
 
 var defaultConn = builder.Configuration.GetConnectionString("DefaultConnection");
@@ -35,6 +37,9 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
         options.LoginPath = "/Login";
         options.LogoutPath = "/Logout";
         options.ExpireTimeSpan = TimeSpan.FromHours(8);
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Strict;
     });
 
 builder.Services.AddAuthorization();
@@ -52,6 +57,25 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+
+app.Use(async (context, next) =>
+{
+    context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+    context.Response.Headers["X-Frame-Options"] = "DENY";
+    context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
+    context.Response.Headers["Permissions-Policy"] = "camera=(), microphone=(), geolocation=()";
+    context.Response.Headers["Content-Security-Policy"] =
+        "default-src 'self'; " +
+        "script-src 'self' 'unsafe-inline' https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; " +
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; " +
+        "font-src 'self' https://cdn.jsdelivr.net; " +
+        "img-src 'self' data:; " +
+        "frame-src https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/; " +
+        "connect-src 'self'; " +
+        "object-src 'none'; " +
+        "base-uri 'self';";
+    await next();
+});
 
 app.UseAuthentication();
 app.UseAuthorization();

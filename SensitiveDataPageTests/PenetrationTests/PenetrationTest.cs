@@ -99,7 +99,7 @@ namespace SensitiveDataPageTests.PenetrationTests
             //Act
             await _page.FillAsync("#Input_Email", xssPayload);
             await _page.FillAsync("#Input_Password", "Test123!");
-            await _page.FillAsync("#Input_ConfirmPassword", "Test123!");
+            await _page.FillAsync("#Input_CheckPassword", "Test123!");
             await _page.WaitForTimeoutAsync(500);
 
             //Assert

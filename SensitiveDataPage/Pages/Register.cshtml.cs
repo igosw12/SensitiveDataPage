@@ -24,7 +24,7 @@ namespace SensitiveDataPage.Pages
             _emailSender = emailSender;
         }
 
-[BindProperty]
+        [BindProperty]
         public required InputModel Input { get; set; }
 
         [BindProperty]
@@ -73,8 +73,6 @@ namespace SensitiveDataPage.Pages
 
         private Task<User> CreateUserAsync()
         {
-            //Consider using a stronger hashing algorithm like Argon2 or bcrypt.
-            //Consider move it to a separate service as it is reusable and it will make the code cleaner
             var salt = new byte[128 / 8];
             using (var rng = RandomNumberGenerator.Create()) rng.GetBytes(salt);
             var hash = Convert.ToBase64String(KeyDerivation.Pbkdf2(
@@ -141,7 +139,7 @@ namespace SensitiveDataPage.Pages
                 <p></p>
                 <p>Click below to verify your email address:</p>
                 <p> </p>
-                <a href='{callbackUrl}' 
+                <a href='{safeUrl}' 
                    style='display:inline-block;padding:12px 20px;
                           color:#fff;background:#007bff;
                           text-decoration:none;border-radius:5px;'>

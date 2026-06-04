@@ -50,7 +50,7 @@
             </div>
             <div class="mb-3">
                 <label asp-for="Input.CheckPassword" class="form-label" data-i18n="reg.confirmPassword">Confirm password</label>
-                <input asp-for="Input.CheckPassword" class="form-control" placeholder="Confirm password" data-i18n="reg.confirmPh" oninput="this.setCustomValidity('')" />
+                <input asp-for="Input.CheckPassword" class="form-control" placeholder="Confirm password" data-i18n="reg.confirmPh" required oninput="this.setCustomValidity('')" />
             </div>
             <div class="mb-3">
                 <label asp-for="Input.DateOfBirth" class="form-label" data-i18n="reg.birthday">Birthday</label>

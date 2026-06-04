@@ -10,6 +10,7 @@ using SensitiveDataPage.Services;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace SensitiveDataPage.Pages
 {
@@ -20,13 +21,15 @@ namespace SensitiveDataPage.Pages
         private readonly IEncrypt _encrypt;
         private readonly IDecrypt _decrypt;
         private readonly IAuditMechanism _auditMechanism;
+        private readonly ILogger<DashboardModel> _logger;
 
-        public DashboardModel(ApplicationDbContext db, IEncrypt encrypt, IDecrypt decrypt, IAuditMechanism auditMechanism)
+        public DashboardModel(ApplicationDbContext db, IEncrypt encrypt, IDecrypt decrypt, IAuditMechanism auditMechanism, ILogger<DashboardModel> logger)
         {
             _db = db;
             _encrypt = encrypt;
             _decrypt = decrypt;
             _auditMechanism = auditMechanism;
+            logger = logger;
         }
 
         public required string Email { get; set; }
@@ -114,7 +117,10 @@ namespace SensitiveDataPage.Pages
                             CreatedAt = record.CreatedAt
                         });
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to decrypt record {RecordId} for user {UserId}", record.Id, userId);
+                }
             }
 
             return new JsonResult(result);
@@ -254,7 +260,9 @@ namespace SensitiveDataPage.Pages
             user.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync();
 
-            return new JsonResult(new { success = true });
+            await HttpContext.SignOutAsync();
+
+            return new JsonResult(new { success = true, requireRelogin = true });
         }
 
         public async Task<IActionResult> OnPostToggle2faAsync([FromBody] Toggle2faRequest request)

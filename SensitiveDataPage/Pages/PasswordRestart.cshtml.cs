@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Newtonsoft.Json.Linq;
 using SensitiveDataPage.Data;
 using SensitiveDataPage.Models;
 using System.ComponentModel.DataAnnotations;
@@ -93,43 +94,54 @@ namespace SensitiveDataPage.Pages
             if (Token == null)
                 return new JsonResult(new { success = false, message = "error.unexpectedTryAgain" });
 
-            var passwordHash = await CreatePassword(Input.Password);
-            var updated = await UpdatePassword(Token.UserId, Token.Id, passwordHash);
+            var user = await _db.Users.FirstOrDefaultAsync(s => s.Id == Token.UserId);
 
-            if (!updated)
+            if (user == null || user.PasswordHash == null)
+            {
                 return new JsonResult(new { success = false, message = "error.unexpectedTryAgain" });
+            }
 
-            return new JsonResult(new { success = true, message = "reset.success" });
+            var salt = user.PasswordHash.Split(':')[0];
+
+            if (salt is null)
+            {
+                return new JsonResult(new { success = false, message = "error.unexpectedTryAgain" });
+            }
+
+            var passwordHash = await CreatePassword(Input.Password, salt);
+            return await UpdatePassword(Token.UserId, Token.Id, passwordHash, user);
         }
 
-        public async Task<bool> UpdatePassword(Guid userId, Guid tokenId, string passwordHash)
+        public async Task<IActionResult> UpdatePassword(Guid userId, Guid tokenId, string passwordHash, User user)
         {
-            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id == userId);
             var token = await _db.PasswordResetTokens.FirstOrDefaultAsync(t => t.Id == tokenId);
 
             if (user == null || token == null)
-                return false;
+                return new JsonResult(new { success = false, message = "error.unexpectedTryAgain" });
+
+            if (user.PasswordHash == passwordHash)
+                return new JsonResult(new { success = false, message = "reset.newPasswordSameAsOld" });
 
             user.PasswordHash = passwordHash;
             user.UpdatedAt = DateTime.UtcNow;
             token.Used = true;
 
             await _db.SaveChangesAsync();
-            return true;
+
+            return new JsonResult(new { success = true, message = "reset.success" });
         }
 
-        public Task<string> CreatePassword(string password)
+        public Task<string> CreatePassword(string password, string salt)
         {
-            var salt = new byte[128 / 8];
-            using (var rng = RandomNumberGenerator.Create()) rng.GetBytes(salt);
+            var saltBytes = Convert.FromBase64String(salt);
             var hash = Convert.ToBase64String(KeyDerivation.Pbkdf2(
                 password: password,
-                salt: salt,
+                salt: saltBytes,
                 prf: KeyDerivationPrf.HMACSHA256,
                 iterationCount: 100_000,
                 numBytesRequested: 256 / 8));
 
-            var passwordHash = Convert.ToBase64String(salt) + ":" + hash;
+            var passwordHash = Convert.ToBase64String(saltBytes) + ":" + hash;
             return Task.FromResult(passwordHash);
         }
 

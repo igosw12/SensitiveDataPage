@@ -13,12 +13,12 @@
             <button class="action-btn lang-btn" data-lang="en" onclick="applyLang('en')">EN</button>
             <button class="action-btn lang-btn" data-lang="pl" onclick="applyLang('pl')">PL</button>
             <label class="toggle-switch-wrap" title="Dark mode">
-                <span class="toggle-label">?</span>
+                <span class="toggle-label">☀</span>
                 <label class="toggle-switch">
                     <input type="checkbox" id="darkModeToggle" onchange="toggleTheme()">
                     <span class="toggle-slider"></span>
                 </label>
-                <span class="toggle-label">?</span>
+                <span class="toggle-label">☾</span>
             </label>
         </div>
     </div>
@@ -26,14 +26,12 @@
     <div class="auth-card">
         @if (Model.Success)
         {
-            <div class="auth-card-icon success">?</div>
             <div class="auth-card-title">Email Verification</div>
             <div class="alert alert-success" role="alert">@Model.Message</div>
             <a asp-page="/Login" class="newAccountBtn">Sign in</a>
         }
         else
         {
-            <div class="auth-card-icon danger">?</div>
             <div class="auth-card-title">Email Verification</div>
             <div class="alert alert-danger" role="alert">@Model.Message</div>
             <a asp-page="/Login" class="newAccountBtn">Return to login</a>

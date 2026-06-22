@@ -10,6 +10,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Net.Mail;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace SensitiveDataPage.Pages
 {
@@ -17,11 +18,15 @@ namespace SensitiveDataPage.Pages
     {
         private readonly ApplicationDbContext _db;
         private readonly IEmailSender _emailSender;
+        private readonly IConfiguration _configuration;
+        private readonly IHttpClientFactory _httpClientFactory;
 
-        public RegisterModel (ApplicationDbContext db, IEmailSender emailSender)
+        public RegisterModel(ApplicationDbContext db, IEmailSender emailSender, IConfiguration configuration, IHttpClientFactory httpClientFactory)
         {
             _db = db;
             _emailSender = emailSender;
+            _configuration = configuration;
+            _httpClientFactory = httpClientFactory;
         }
 
         [BindProperty]
@@ -56,7 +61,7 @@ namespace SensitiveDataPage.Pages
             if (!ModelState.IsValid)
                 return new JsonResult(new { success = false, message = "error.invalidForm" });
 
-            if (RecaptchaToken == null)
+            if (RecaptchaToken == null || !await VerifyRecaptchaAsync(RecaptchaToken))
                 return new JsonResult(new { success = false, message = "reg.recaptchaFail" });
 
             var existing = await _db.Users.FirstOrDefaultAsync(u => u.Email == Input.Email);
@@ -69,6 +74,29 @@ namespace SensitiveDataPage.Pages
             await _db.SaveChangesAsync();
 
             return new JsonResult(new { success = true, message = "reg.registerSuccess" });
+        }
+
+        private async Task<bool> VerifyRecaptchaAsync(string token)
+        {
+            var secretKey = _configuration["ReCaptchaSettings:SecretKey"];
+            if (string.IsNullOrWhiteSpace(secretKey))
+                return false;
+
+            var client = _httpClientFactory.CreateClient();
+            var response = await client.PostAsync(
+                "https://www.google.com/recaptcha/api/siteverify",
+                new FormUrlEncodedContent(new Dictionary<string, string>
+                {
+                    ["secret"] = secretKey,
+                    ["response"] = token
+                }));
+
+            if (!response.IsSuccessStatusCode)
+                return false;
+
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            return doc.RootElement.TryGetProperty("success", out var successProp) && successProp.GetBoolean();
         }
 
         private Task<User> CreateUserAsync()

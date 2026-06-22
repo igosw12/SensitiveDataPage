@@ -31,6 +31,8 @@ builder.Services.AddDbContext<SensitiveDataPage.Data.ApplicationDbContext>(optio
 
 builder.Services.AddHostedService<DailyCountResetMechanism>();
 
+builder.Services.AddHttpClient();
+
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
     {

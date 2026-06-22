@@ -43,11 +43,20 @@ namespace SensitiveDataPage.Pages
             {
                 var existing = await _db.Users.FirstOrDefaultAsync(u => u.Email == Input.Email);
 
-                if (existing is null)
-                    return new JsonResult(new { success = false, message = "forgot.noAccount" });
+                if (existing != null)
+                {
+                    // Rate limiting: only send one reset email per 5 minutes per account
+                    var recentToken = await _db.PasswordResetTokens
+                        .FirstOrDefaultAsync(t => t.UserId == existing.Id && t.CreatedAt > DateTime.UtcNow.AddMinutes(-5));
 
-                var rawToken = await PasswordResetToken(existing.Id);
-                await SendEmailAsync(rawToken);
+                    if (recentToken == null)
+                    {
+                        var rawToken = await PasswordResetToken(existing.Id);
+                        await SendEmailAsync(rawToken);
+                    }
+                }
+
+                // Always return the same response to prevent user enumeration
                 return new JsonResult(new { success = true, message = "forgot.emailSent" });
             }
             catch

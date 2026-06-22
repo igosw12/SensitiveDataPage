@@ -101,14 +101,15 @@ namespace SensitiveDataPage.Pages
                 return new JsonResult(new { success = false, message = "error.unexpectedTryAgain" });
             }
 
-            var salt = user.PasswordHash.Split(':')[0];
+            // Verify new password is not the same as old (using old salt for comparison only)
+            var oldSalt = user.PasswordHash.Split(':')[0];
+            var checkHash = await CreatePassword(Input.Password, oldSalt);
+            if (user.PasswordHash == checkHash)
+                return new JsonResult(new { success = false, message = "reset.newPasswordSameAsOld" });
 
-            if (salt is null)
-            {
-                return new JsonResult(new { success = false, message = "error.unexpectedTryAgain" });
-            }
-
-            var passwordHash = await CreatePassword(Input.Password, salt);
+            // Generate a fresh salt for the new password hash
+            var newSalt = Convert.ToBase64String(RandomNumberGenerator.GetBytes(128 / 8));
+            var passwordHash = await CreatePassword(Input.Password, newSalt);
             return await UpdatePassword(Token.UserId, Token.Id, passwordHash, user);
         }
 
@@ -118,9 +119,6 @@ namespace SensitiveDataPage.Pages
 
             if (user == null || token == null)
                 return new JsonResult(new { success = false, message = "error.unexpectedTryAgain" });
-
-            if (user.PasswordHash == passwordHash)
-                return new JsonResult(new { success = false, message = "reset.newPasswordSameAsOld" });
 
             user.PasswordHash = passwordHash;
             user.UpdatedAt = DateTime.UtcNow;

@@ -44,7 +44,7 @@ namespace SensitiveDataPage.Pages
             var dbToken = await _db.EmailVerificationTokens
                 .Include(t => t.User)
                 .FirstOrDefaultAsync(t => t.TokenHash == tokenHash && !t.Used && t.ExpiresAt > DateTime.UtcNow);
-
+            
             if (dbToken == null)
             {
                 Success = false;

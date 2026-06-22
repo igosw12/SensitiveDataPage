@@ -29,7 +29,7 @@ namespace SensitiveDataPage.Pages
             _encrypt = encrypt;
             _decrypt = decrypt;
             _auditMechanism = auditMechanism;
-            logger = logger;
+            _logger = logger;
         }
 
         public required string Email { get; set; }
